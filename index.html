@@ -521,10 +521,14 @@
             isPlaying = true;
             playPauseBtn.textContent = '⏸ Pausar';
             
+            console.log('▶ Play iniciado - velocidad:', speed, 'ms', 'fragmentos totales:', storyFragments.length);
+            
             intervalId = setInterval(() => {
+                console.log('⏩ Avanzando de', currentIndex, 'a', currentIndex + 1);
                 if (currentIndex < storyFragments.length - 1) {
                     showFragment(currentIndex + 1);
                 } else {
+                    console.log('✅ Cuento terminado');
                     pause();
                 }
             }, speed);
