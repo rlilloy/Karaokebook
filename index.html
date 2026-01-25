@@ -253,12 +253,7 @@
         </div>
 
         <div class="control-row">
-            <button id="prev">⏮ Anterior</button>
             <button id="restart">⟲ Reiniciar</button>
-            <button id="next">Siguiente ⏭</button>
-        </div>
-
-        <div class="control-row">
             <button id="back-to-menu">📚 Menú</button>
         </div>
     </div>
@@ -433,18 +428,6 @@
             if (isPlaying) {
                 pause();
                 play();
-            }
-        });
-
-        document.getElementById('prev').addEventListener('click', () => {
-            if (currentIndex > 0) {
-                showFragment(currentIndex - 1);
-            }
-        });
-
-        document.getElementById('next').addEventListener('click', () => {
-            if (currentIndex < storyFragments.length - 1) {
-                showFragment(currentIndex + 1);
             }
         });
 
