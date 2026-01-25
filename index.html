@@ -257,6 +257,10 @@
             <button id="restart">⟲ Reiniciar</button>
             <button id="next">Siguiente ⏭</button>
         </div>
+
+        <div class="control-row">
+            <button id="back-to-menu">📚 Menú</button>
+        </div>
     </div>
 
     <script>
@@ -447,6 +451,16 @@
         document.getElementById('restart').addEventListener('click', () => {
             pause();
             showFragment(0);
+        });
+
+        document.getElementById('back-to-menu').addEventListener('click', () => {
+            pause();
+            storyFragments = [];
+            currentIndex = 0;
+            textDisplay.innerHTML = '';
+            storyTitle.textContent = 'Lector de Cuentos';
+            loadTextDiv.classList.remove('hidden');
+            storySelector.value = '';
         });
 
         // Prevenir zoom en iOS
