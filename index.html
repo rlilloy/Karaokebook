@@ -294,8 +294,8 @@
     <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
 
     <script>
-        // URL del archivo JSON con los cuentos (carga desde GitHub)
-        const CUENTOS_JSON_URL = 'https://raw.githubusercontent.com/rlilloy/Karaokebook/main/cuentos.json';
+        // URL del archivo JSON - usando ruta relativa (mismo dominio)
+        const CUENTOS_JSON_URL = './cuentos.json';
         
         let storyLibrary = [];
         let storyFragments = [];
@@ -380,8 +380,10 @@
                 document.querySelectorAll('.elegir-cuento-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
+                        console.log('🎯 Click en "Elegir cuento"');
                         const index = parseInt(btn.dataset.index);
                         const cuento = storyLibrary[index];
+                        console.log('📖 Cargando cuento:', cuento.title);
                         loadStory(cuento.text, cuento.title);
                     });
                 });
@@ -422,13 +424,23 @@
         cargarCuentos();
 
         function loadStory(text, title = "Lector de Cuentos") {
+            console.log('📚 loadStory() ejecutado');
+            console.log('  - Título:', title);
+            console.log('  - Texto length:', text.length);
+            
             // Dividir el texto en fragmentos inteligentes (~20 palabras, terminando en . o ,)
             storyFragments = dividirTextoInteligente(text);
+            console.log('  - Fragmentos creados:', storyFragments.length);
+            
             currentIndex = 0;
             totalSpan.textContent = storyFragments.length;
             storyTitle.textContent = title;
+            
             showFragment(0);
+            
+            console.log('  - Ocultando menú...');
             loadTextDiv.classList.add('hidden');
+            console.log('  - ¿Menú oculto?', loadTextDiv.classList.contains('hidden'));
         }
 
         function dividirTextoInteligente(texto) {
