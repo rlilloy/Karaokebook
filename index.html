@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
+<!-- saved from url=(0044)file:///C:/Users/BANGHO/Downloads/index.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,7 +28,7 @@
             overflow-y: auto;
             overflow-x: hidden;
             position: relative;
-            padding: 20px;
+            padding: 20px 20px 32vh 20px;
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -65,11 +65,16 @@
         }
 
         #controls {
+            position: fixed;
+            bottom: 6vh;
+            left: 0;
+            right: 0;
+            z-index: 99;
             background: #2a2a2a;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             border-top: 1px solid #444;
         }
 
@@ -81,8 +86,8 @@
         }
 
         button {
-            padding: 15px 25px;
-            font-size: 1rem;
+            padding: 12px 20px;
+            font-size: 0.9rem;
             border: none;
             border-radius: 8px;
             background: #4a4a4a;
@@ -99,8 +104,9 @@
 
         #play-pause {
             background: #007aff;
-            font-size: 1.2rem;
-            max-width: 200px;
+            font-size: 1rem;
+            max-width: 180px;
+            padding: 14px 24px;
         }
 
         #play-pause:active {
@@ -154,19 +160,31 @@
         }
 
         #progress {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
             text-align: center;
             font-size: 0.85rem;
             color: #666;
-            padding: 5px;
+            padding: 10px;
+            background: #1a1a1a;
+            border-top: 1px solid #444;
         }
 
         .title {
+            position: fixed;
+            bottom: 28vh;
+            left: 0;
+            right: 0;
+            z-index: 100;
             text-align: center;
-            padding: 15px;
+            padding: 8px;
             background: #2a2a2a;
-            border-bottom: 1px solid #444;
+            border-top: 1px solid #444;
             font-size: 1.1rem;
-            font-weight: normal;
+            font-weight: bold;
         }
 
         #load-text {
@@ -217,26 +235,41 @@
 </head>
 <body>
     <div id="load-text">
-        <h2 style="color: #e0e0e0;">Seleccioná un cuento</h2>
+        <h2 style="color: #e0e0e0; margin-bottom: 20px;">Catálogo de Cuentos</h2>
         
-        <select id="story-selector" style="width: 100%; max-width: 500px; padding: 15px; font-size: 1rem; background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; border-radius: 8px; margin-bottom: 20px;">
-            <option value="">Cargando cuentos...</option>
-        </select>
+        <div id="cuentos-catalog" style="
+            max-height: 70vh; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px;
+            padding: 10px;
+        ">
+            <p style="text-align: center; color: #999;">Cargando cuentos...</p>
+        </div>
 
-        <textarea id="story-input" placeholder="Pegá el texto de tu cuento aquí..." style="display: none;"></textarea>
-        
-        <button id="load-button">Comenzar lectura</button>
-        <p class="instruction">Elegí un cuento del menú o pegá tu propio texto</p>
+        <div style="margin-top: 20px; text-align: center;">
+            <button id="custom-text-btn" style="
+                padding: 12px 24px;
+                font-size: 1rem;
+                background: #4a4a4a;
+                color: #e0e0e0;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+            ">✏️ Pegar mi propio texto</button>
+        </div>
+
+        <textarea id="story-input" placeholder="Pegá el texto de tu cuento aquí..." style="display: none; margin-top: 20px;"></textarea>
+        <button id="load-custom-btn" style="display: none; margin-top: 10px;">Cargar texto</button>
     </div>
 
-    <div class="title" id="story-title">Lector de Cuentos</div>
-    
     <div id="reader-container">
         <div id="text-display"></div>
     </div>
 
-    <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
-
+    <div class="title" id="story-title">Lector de Cuentos</div>
+    
     <div id="controls">
         <div class="control-row">
             <button id="play-pause">▶ Iniciar</button>
@@ -253,15 +286,17 @@
         </div>
 
         <div class="control-row">
-            <button id="prev">⏮ Anterior</button>
             <button id="restart">⟲ Reiniciar</button>
-            <button id="next">Siguiente ⏭</button>
+            <button id="narrate">🔊 Narrar</button>
+            <button id="back-to-menu">📚 Menú</button>
         </div>
     </div>
 
+    <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
+
     <script>
-        // URL del archivo JSON con los cuentos (carga desde GitHub)
-        const CUENTOS_JSON_URL = 'https://raw.githubusercontent.com/rlilloy/Karaokebook/main/cuentos.json';
+        // URL del archivo JSON - usando ruta relativa (mismo dominio)
+        const CUENTOS_JSON_URL = './cuentos.json';
         
         let storyLibrary = [];
         let storyFragments = [];
@@ -269,6 +304,16 @@
         let isPlaying = false;
         let intervalId = null;
         let speed = 3000; // milliseconds
+        
+        // Variables para narración
+        let isNarrating = false;
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
+        
+        // Variables para narración
+        let isNarrating = false;
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
 
         const textDisplay = document.getElementById('text-display');
         const playPauseBtn = document.getElementById('play-pause');
@@ -278,9 +323,10 @@
         const totalSpan = document.getElementById('total');
         const loadTextDiv = document.getElementById('load-text');
         const storyInput = document.getElementById('story-input');
-        const loadButton = document.getElementById('load-button');
         const storyTitle = document.getElementById('story-title');
-        const storySelector = document.getElementById('story-selector');
+        const customTextBtn = document.getElementById('custom-text-btn');
+        const loadCustomBtn = document.getElementById('load-custom-btn');
+        const narrateBtn = document.getElementById('narrate');
 
         // Cargar cuentos desde JSON al iniciar
         async function cargarCuentos() {
@@ -291,49 +337,164 @@
                 }
                 storyLibrary = await response.json();
                 
-                // Limpiar el selector y agregar los cuentos cargados
-                storySelector.innerHTML = '<option value="">-- Elegí un cuento --</option>';
+                // Generar catálogo de cuentos
+                const catalog = document.getElementById('cuentos-catalog');
+                catalog.innerHTML = '';
                 
                 storyLibrary.forEach((cuento, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = cuento.title;
-                    storySelector.appendChild(option);
+                    // Extraer preview (primeras 20-30 palabras hasta punto)
+                    const preview = extraerPreview(cuento.text);
+                    
+                    // Crear card del cuento
+                    const card = document.createElement('div');
+                    card.style.cssText = `
+                        background: #2a2a2a;
+                        border: 1px solid #444;
+                        border-radius: 8px;
+                        padding: 15px;
+                        cursor: pointer;
+                        transition: all 0.3s;
+                    `;
+                    
+                    card.innerHTML = `
+                        <h3 style="color: #00d9ff; margin: 0 0 10px 0; font-size: 1.1rem;">
+                            📖 ${cuento.title}
+                        </h3>
+                        <p style="color: #999; margin: 0 0 15px 0; font-size: 0.9rem; line-height: 1.6;">
+                            "${preview}..."
+                        </p>
+                        <button class="elegir-cuento-btn" data-index="${index}" style="
+                            padding: 10px 20px;
+                            font-size: 0.9rem;
+                            background: #007aff;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            width: 100%;
+                        ">Elegir cuento</button>
+                    `;
+                    
+                    // Hover effect
+                    card.addEventListener('mouseenter', () => {
+                        card.style.borderColor = '#00d9ff';
+                        card.style.transform = 'scale(1.02)';
+                    });
+                    card.addEventListener('mouseleave', () => {
+                        card.style.borderColor = '#444';
+                        card.style.transform = 'scale(1)';
+                    });
+                    
+                    catalog.appendChild(card);
                 });
                 
-                // Agregar opción de texto personalizado al final
-                const customOption = document.createElement('option');
-                customOption.value = 'custom';
-                customOption.textContent = '✏️ Pegar mi propio texto';
-                storySelector.appendChild(customOption);
+                // Event listeners para los botones "Elegir cuento"
+                document.querySelectorAll('.elegir-cuento-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        console.log('🎯 Click en "Elegir cuento"');
+                        const index = parseInt(btn.dataset.index);
+                        const cuento = storyLibrary[index];
+                        console.log('📖 Cargando cuento:', cuento.title);
+                        loadStory(cuento.text, cuento.title);
+                    });
+                });
                 
                 console.log(`✅ Se cargaron ${storyLibrary.length} cuentos exitosamente`);
             } catch (error) {
                 console.error('Error cargando cuentos:', error);
-                alert('No se pudieron cargar los cuentos. Por favor recargá la página.');
+                document.getElementById('cuentos-catalog').innerHTML = 
+                    '<p style="color: #ff6b6b; text-align: center;">Error al cargar cuentos. Intentá recargar la página.</p>';
             }
+        }
+
+        // Función para extraer preview (20-30 palabras hasta punto)
+        function extraerPreview(texto) {
+            const palabras = texto.trim().split(/\s+/);
+            let preview = '';
+            let contador = 0;
+            
+            for (let palabra of palabras) {
+                preview += (preview ? ' ' : '') + palabra;
+                contador++;
+                
+                // Si llegamos a 20 palabras y hay un punto, cortar
+                if (contador >= 20 && palabra.match(/[.!?]$/)) {
+                    break;
+                }
+                
+                // Forzar corte en 30 palabras
+                if (contador >= 30) {
+                    break;
+                }
+            }
+            
+            return preview;
         }
 
         // Cargar cuentos al iniciar la página
         cargarCuentos();
 
-        // Mostrar/ocultar textarea según selección
-        storySelector.addEventListener('change', (e) => {
-            if (e.target.value === 'custom') {
-                storyInput.style.display = 'block';
-            } else {
-                storyInput.style.display = 'none';
-            }
-        });
+        // Cargar voces de TTS (necesario en algunos navegadores)
+        if (speechSynth.onvoiceschanged !== undefined) {
+            speechSynth.onvoiceschanged = () => {
+                console.log('🎤 Voces de narración cargadas:', speechSynth.getVoices().length);
+            };
+        }
 
         function loadStory(text, title = "Lector de Cuentos") {
-            // Dividir el texto en fragmentos (por líneas vacías o saltos de línea)
-            storyFragments = text.split('\n').filter(line => line.trim() !== '');
+            console.log('📚 loadStory() ejecutado');
+            console.log('  - Título:', title);
+            console.log('  - Texto length:', text.length);
+            
+            // Dividir el texto en fragmentos inteligentes (~20 palabras, terminando en . o ,)
+            storyFragments = dividirTextoInteligente(text);
+            console.log('  - Fragmentos creados:', storyFragments.length);
+            
             currentIndex = 0;
             totalSpan.textContent = storyFragments.length;
             storyTitle.textContent = title;
+            
             showFragment(0);
+            
+            console.log('  - Ocultando menú...');
             loadTextDiv.classList.add('hidden');
+            console.log('  - ¿Menú oculto?', loadTextDiv.classList.contains('hidden'));
+        }
+
+        function dividirTextoInteligente(texto) {
+            // Limpiar el texto
+            texto = texto.replace(/\s+/g, ' ').trim();
+            
+            const fragmentos = [];
+            const palabras = texto.split(' ');
+            let fragmentoActual = '';
+            let contadorPalabras = 0;
+            
+            for (let i = 0; i < palabras.length; i++) {
+                const palabra = palabras[i];
+                fragmentoActual += (fragmentoActual ? ' ' : '') + palabra;
+                contadorPalabras++;
+                
+                // Buscar si termina en punto o coma
+                const terminaEnPuntuacion = palabra.match(/[.,;:]$/);
+                
+                // Crear fragmento si:
+                // 1. Tiene al menos 20 palabras Y termina en puntuación
+                // 2. O tiene más de 30 palabras (forzar corte)
+                if ((contadorPalabras >= 20 && terminaEnPuntuacion) || contadorPalabras >= 30) {
+                    fragmentos.push(fragmentoActual.trim());
+                    fragmentoActual = '';
+                    contadorPalabras = 0;
+                }
+            }
+            
+            // Agregar último fragmento si quedó algo
+            if (fragmentoActual.trim()) {
+                fragmentos.push(fragmentoActual.trim());
+            }
+            
+            return fragmentos;
         }
 
         function showFragment(index) {
@@ -347,6 +508,7 @@
                     const line = document.createElement('div');
                     line.className = 'text-line';
                     line.textContent = fragment;
+                    line.id = `line-${i}`;
                     
                     if (i === index) {
                         line.classList.add('active');
@@ -357,33 +519,19 @@
                     textDisplay.appendChild(line);
                 });
                 
-<<<<<<< HEAD
-                // Scroll automático para mantener la línea activa visible
-                const activeLine = textDisplay.querySelector('.active');
-                if (activeLine) {
-                    activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-=======
-                // Scroll automático MEJORADO para mantener la línea activa en el centro
+                // Scroll tipo TELEPROMPTER: línea activa siempre arriba
                 setTimeout(() => {
                     const activeLine = document.getElementById(`line-${index}`);
                     const container = document.getElementById('reader-container');
                     
                     if (activeLine && container) {
-                        const containerHeight = container.clientHeight;
-                        const lineTop = activeLine.offsetTop;
-                        const lineHeight = activeLine.clientHeight;
+                        // Scroll INSTANTÁNEO (sin smooth) para teleprompter
+                        const scrollPosition = activeLine.offsetTop - 20;
+                        container.scrollTop = scrollPosition;
                         
-                        // Calcular scroll para centrar la línea
-                        const scrollPosition = lineTop - (containerHeight / 2) + (lineHeight / 2);
-                        
-                        container.scrollTo({
-                            top: scrollPosition,
-                            behavior: 'smooth'
-                        });
+                        console.log('📍 Scroll a línea', index, '- offset:', scrollPosition);
                     }
-                }, 100);
->>>>>>> parent of a73e219 (s)
+                }, 50);
                 
                 currentSpan.textContent = index + 1;
             }
@@ -395,10 +543,14 @@
             isPlaying = true;
             playPauseBtn.textContent = '⏸ Pausar';
             
+            console.log('▶ Play iniciado - velocidad:', speed, 'ms', 'fragmentos totales:', storyFragments.length);
+            
             intervalId = setInterval(() => {
+                console.log('⏩ Avanzando de', currentIndex, 'a', currentIndex + 1);
                 if (currentIndex < storyFragments.length - 1) {
                     showFragment(currentIndex + 1);
                 } else {
+                    console.log('✅ Cuento terminado');
                     pause();
                 }
             }, speed);
@@ -413,33 +565,230 @@
             }
         }
 
-        // Event Listeners
-        loadButton.addEventListener('click', () => {
-            const selectedIndex = storySelector.value;
+        // ========== FUNCIONES DE NARRACIÓN ==========
+        
+        function getSpanishVoice() {
+            // Buscar voz en español del sistema
+            const voices = speechSynth.getVoices();
             
-            if (selectedIndex === 'custom') {
-                const text = storyInput.value.trim();
-                if (text) {
-                    loadStory(text, "Tu Cuento");
-                } else {
-                    alert('Por favor pegá un texto');
-                }
-            } else if (selectedIndex !== '') {
-                const story = storyLibrary[parseInt(selectedIndex)];
-                loadStory(story.text, story.title);
+            // Prioridad: español (cualquier región)
+            let spanishVoice = voices.find(voice => 
+                voice.lang.startsWith('es-') || voice.lang === 'es'
+            );
+            
+            // Si no hay voz en español, usar la primera disponible
+            if (!spanishVoice && voices.length > 0) {
+                spanishVoice = voices[0];
+                console.log('⚠️ No se encontró voz en español, usando:', spanishVoice.name);
+            }
+            
+            return spanishVoice;
+        }
+
+        function narrateFragment(index) {
+            if (index >= storyFragments.length) {
+                stopNarration();
+                return;
+            }
+
+            // Cancelar narración anterior si existe
+            if (currentUtterance) {
+                speechSynth.cancel();
+            }
+
+            const text = storyFragments[index];
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            
+            // Configurar voz en español
+            const spanishVoice = getSpanishVoice();
+            if (spanishVoice) {
+                currentUtterance.voice = spanishVoice;
+                currentUtterance.lang = spanishVoice.lang;
             } else {
-                alert('Por favor seleccioná un cuento');
+                currentUtterance.lang = 'es-ES'; // Fallback a español
+            }
+            
+            // Configurar parámetros de voz
+            currentUtterance.rate = 0.9; // Velocidad (0.1 a 10, 1 es normal)
+            currentUtterance.pitch = 1; // Tono (0 a 2, 1 es normal)
+            currentUtterance.volume = 1; // Volumen (0 a 1)
+
+            // Cuando termina de narrar, avanzar al siguiente
+            currentUtterance.onend = () => {
+                if (isNarrating && currentIndex < storyFragments.length - 1) {
+                    showFragment(currentIndex + 1);
+                    setTimeout(() => {
+                        narrateFragment(currentIndex);
+                    }, 500); // Pequeña pausa entre fragmentos
+                } else {
+                    stopNarration();
+                }
+            };
+
+            currentUtterance.onerror = (error) => {
+                console.error('Error en narración:', error);
+                stopNarration();
+            };
+
+            // Iniciar narración
+            speechSynth.speak(currentUtterance);
+            console.log('🔊 Narrando fragmento', index);
+        }
+
+        function startNarration() {
+            if (storyFragments.length === 0) return;
+
+            // Detener play automático si está corriendo
+            if (isPlaying) {
+                pause();
+            }
+
+            isNarrating = true;
+            narrateBtn.textContent = '⏸ Pausar voz';
+            narrateBtn.style.background = '#ff6b6b';
+            
+            console.log('🎙️ Iniciando narración desde fragmento', currentIndex);
+            narrateFragment(currentIndex);
+        }
+
+        function stopNarration() {
+            isNarrating = false;
+            narrateBtn.textContent = '🔊 Narrar';
+            narrateBtn.style.background = '#4a4a4a';
+            
+            if (currentUtterance) {
+                speechSynth.cancel();
+                currentUtterance = null;
+            }
+            
+            console.log('⏹️ Narración detenida');
+        }
+
+        function toggleNarration() {
+            if (isNarrating) {
+                stopNarration();
+            } else {
+                startNarration();
+            }
+        }
+
+        // Cargar voces cuando estén disponibles
+        if (speechSynth.onvoiceschanged !== undefined) {
+            speechSynth.onvoiceschanged = () => {
+                const spanishVoice = getSpanishVoice();
+                if (spanishVoice) {
+                    console.log('✅ Voz en español disponible:', spanishVoice.name, spanishVoice.lang);
+                }
+            };
+        }
+
+        // ===== FUNCIONES DE NARRACIÓN =====
+        
+        function startNarration() {
+            if (storyFragments.length === 0) return;
+            
+            isNarrating = true;
+            narrateBtn.textContent = '⏹ Detener';
+            console.log('🔊 Narración iniciada');
+            
+            narrateCurrentFragment();
+        }
+
+        function stopNarration() {
+            isNarrating = false;
+            narrateBtn.textContent = '🔊 Narrar';
+            
+            // Detener voz actual
+            if (speechSynth.speaking) {
+                speechSynth.cancel();
+            }
+            
+            console.log('⏹ Narración detenida');
+        }
+
+        function narrateCurrentFragment() {
+            if (!isNarrating || currentIndex >= storyFragments.length) {
+                stopNarration();
+                return;
+            }
+
+            const text = storyFragments[currentIndex];
+            
+            // Cancelar cualquier narración previa
+            speechSynth.cancel();
+            
+            // Crear nueva narración
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            
+            // Configurar voz en español si está disponible
+            const voices = speechSynth.getVoices();
+            const spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+            if (spanishVoice) {
+                currentUtterance.voice = spanishVoice;
+            }
+            
+            // Configurar parámetros de voz
+            currentUtterance.rate = 0.9; // Velocidad (0.1 a 10)
+            currentUtterance.pitch = 1; // Tono (0 a 2)
+            currentUtterance.volume = 1; // Volumen (0 a 1)
+            
+            // Cuando termina de narrar un fragmento, pasar al siguiente
+            currentUtterance.onend = () => {
+                if (isNarrating && currentIndex < storyFragments.length - 1) {
+                    showFragment(currentIndex + 1);
+                    // Pequeña pausa entre fragmentos
+                    setTimeout(() => {
+                        narrateCurrentFragment();
+                    }, 500);
+                } else {
+                    stopNarration();
+                }
+            };
+            
+            currentUtterance.onerror = (event) => {
+                console.error('❌ Error en narración:', event.error);
+                stopNarration();
+            };
+            
+            console.log('📢 Narrando fragmento', currentIndex + 1, ':', text.substring(0, 50) + '...');
+            speechSynth.speak(currentUtterance);
+        }
+
+        // ===== FIN FUNCIONES DE NARRACIÓN =====
+
+        // Event Listeners
+        
+        // Botón de texto personalizado
+        customTextBtn.addEventListener('click', () => {
+            storyInput.style.display = 'block';
+            loadCustomBtn.style.display = 'block';
+            customTextBtn.style.display = 'none';
+        });
+
+        // Cargar texto personalizado
+        loadCustomBtn.addEventListener('click', () => {
+            const text = storyInput.value.trim();
+            if (text) {
+                loadStory(text, "Tu Cuento");
+            } else {
+                alert('Por favor pegá un texto');
             }
         });
 
         playPauseBtn.addEventListener('click', () => {
+            console.log('🔘 Botón clickeado');
+            console.log('📊 Estado actual - isPlaying:', isPlaying, 'fragmentos:', storyFragments.length, 'speed:', speed);
+            
             if (storyFragments.length === 0) {
+                console.log('❌ No hay fragmentos cargados');
                 return;
             }
             
             if (isPlaying) {
+                console.log('⏸ Pausando...');
                 pause();
             } else {
+                console.log('▶ Iniciando play...');
                 play();
             }
         });
@@ -454,25 +803,42 @@
             }
         });
 
-        document.getElementById('prev').addEventListener('click', () => {
-            if (currentIndex > 0) {
-                showFragment(currentIndex - 1);
-            }
-        });
-
-        document.getElementById('next').addEventListener('click', () => {
-            if (currentIndex < storyFragments.length - 1) {
-                showFragment(currentIndex + 1);
-            }
-        });
-
         document.getElementById('restart').addEventListener('click', () => {
             pause();
+            stopNarration(); // Detener narración si está activa
             showFragment(0);
+        });
+
+        // Botón de narración
+        narrateBtn.addEventListener('click', () => {
+            if (storyFragments.length === 0) {
+                console.log('❌ No hay fragmentos cargados');
+                return;
+            }
+            
+            if (isNarrating) {
+                stopNarration();
+            } else {
+                // Si está en auto-play, pausarlo
+                if (isPlaying) {
+                    pause();
+                }
+                startNarration();
+            }
+        });
+
+        document.getElementById('back-to-menu').addEventListener('click', () => {
+            pause();
+            storyFragments = [];
+            currentIndex = 0;
+            textDisplay.innerHTML = '';
+            storyTitle.textContent = 'Lector de Cuentos';
+            loadTextDiv.classList.remove('hidden');
         });
 
         // Prevenir zoom en iOS
         document.addEventListener('gesturestart', (e) => e.preventDefault());
     </script>
-</body>
-</html>
+
+
+</body></html>
