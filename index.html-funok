@@ -28,7 +28,7 @@
             overflow-y: auto;
             overflow-x: hidden;
             position: relative;
-            padding: 20px 20px 45vh 20px;
+            padding: 20px 20px 32vh 20px;
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -104,8 +104,8 @@
 
         #play-pause {
             background: #007aff;
-            font-size: 1rem;
-            padding: 12px 24px;
+            font-size: 1.2rem;
+            padding: 18px 30px;
             font-weight: bold;
         }
 
