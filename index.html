@@ -421,15 +421,6 @@
         // Cargar cuentos al iniciar la página
         cargarCuentos();
 
-        // Mostrar/ocultar textarea según selección
-        storySelector.addEventListener('change', (e) => {
-            if (e.target.value === 'custom') {
-                storyInput.style.display = 'block';
-            } else {
-                storyInput.style.display = 'none';
-            }
-        });
-
         function loadStory(text, title = "Lector de Cuentos") {
             // Dividir el texto en fragmentos inteligentes (~20 palabras, terminando en . o ,)
             storyFragments = dividirTextoInteligente(text);
@@ -602,7 +593,6 @@
             textDisplay.innerHTML = '';
             storyTitle.textContent = 'Lector de Cuentos';
             loadTextDiv.classList.remove('hidden');
-            storySelector.value = '';
         });
 
         // Prevenir zoom en iOS
