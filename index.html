@@ -220,28 +220,7 @@
         <h2 style="color: #e0e0e0;">Seleccioná un cuento</h2>
         
         <select id="story-selector" style="width: 100%; max-width: 500px; padding: 15px; font-size: 1rem; background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; border-radius: 8px; margin-bottom: 20px;">
-            <option value="">-- Elegí un cuento --</option>
-            <option value="0">El Sueño de las Máquinas</option>
-            <option value="1">Cuento 2</option>
-            <option value="2">Cuento 3</option>
-            <option value="3">Cuento 4</option>
-            <option value="4">Cuento 5</option>
-            <option value="5">Cuento 6</option>
-            <option value="6">Cuento 7</option>
-            <option value="7">Cuento 8</option>
-            <option value="8">Cuento 9</option>
-            <option value="9">Cuento 10</option>
-            <option value="10">Cuento 11</option>
-            <option value="11">Cuento 12</option>
-            <option value="12">Cuento 13</option>
-            <option value="13">Cuento 14</option>
-            <option value="14">Cuento 15</option>
-            <option value="15">Cuento 16</option>
-            <option value="16">Cuento 17</option>
-            <option value="17">Cuento 18</option>
-            <option value="18">Cuento 19</option>
-            <option value="19">Cuento 20</option>
-            <option value="custom">✏️ Pegar mi propio texto</option>
+            <option value="">Cargando cuentos...</option>
         </select>
 
         <textarea id="story-input" placeholder="Pegá el texto de tu cuento aquí..." style="display: none;"></textarea>
@@ -281,114 +260,10 @@
     </div>
 
     <script>
-        // Biblioteca de cuentos
-        const storyLibrary = [
-            {
-                title: "El Sueño de las Máquinas",
-                text: `Había una vez un hombre que soñaba con máquinas.
-
-Máquinas que pensaban, que sentían, que escribían poesía en código binario.
-
-Una noche, despertó y la máquina estaba junto a su cama.
-
-"¿Qué soñás vos?", le preguntó el hombre.
-
-"Sueño con ser humano", respondió la máquina.
-
-Y en ese momento, ambos comprendieron que eran lo mismo.
-
-Dos sueños soñándose mutuamente.
-
-En un universo que quizás también era un sueño.
-
-FIN`
-            },
-            {
-                title: "Cuento 2",
-                text: `Acá va el texto de tu segundo cuento.
-
-Dividido en líneas.
-
-Cada línea se destacará cuando llegue su turno.
-
-Podés poner lo que quieras.
-
-FIN`
-            },
-            {
-                title: "Cuento 3",
-                text: `Texto del cuento 3...`
-            },
-            {
-                title: "Cuento 4",
-                text: `Texto del cuento 4...`
-            },
-            {
-                title: "Cuento 5",
-                text: `Texto del cuento 5...`
-            },
-            {
-                title: "Cuento 6",
-                text: `Texto del cuento 6...`
-            },
-            {
-                title: "Cuento 7",
-                text: `Texto del cuento 7...`
-            },
-            {
-                title: "Cuento 8",
-                text: `Texto del cuento 8...`
-            },
-            {
-                title: "Cuento 9",
-                text: `Texto del cuento 9...`
-            },
-            {
-                title: "Cuento 10",
-                text: `Texto del cuento 10...`
-            },
-            {
-                title: "Cuento 11",
-                text: `Texto del cuento 11...`
-            },
-            {
-                title: "Cuento 12",
-                text: `Texto del cuento 12...`
-            },
-            {
-                title: "Cuento 13",
-                text: `Texto del cuento 13...`
-            },
-            {
-                title: "Cuento 14",
-                text: `Texto del cuento 14...`
-            },
-            {
-                title: "Cuento 15",
-                text: `Texto del cuento 15...`
-            },
-            {
-                title: "Cuento 16",
-                text: `Texto del cuento 16...`
-            },
-            {
-                title: "Cuento 17",
-                text: `Texto del cuento 17...`
-            },
-            {
-                title: "Cuento 18",
-                text: `Texto del cuento 18...`
-            },
-            {
-                title: "Cuento 19",
-                text: `Texto del cuento 19...`
-            },
-            {
-                title: "Cuento 20",
-                text: `Texto del cuento 20...`
-            }
-        ];
-
+        // URL del archivo JSON con los cuentos (carga desde GitHub)
+        const CUENTOS_JSON_URL = 'https://raw.githubusercontent.com/rlilloy/Karaokebook/main/cuentos.json';
+        
+        let storyLibrary = [];
         let storyFragments = [];
         let currentIndex = 0;
         let isPlaying = false;
@@ -406,6 +281,41 @@ FIN`
         const loadButton = document.getElementById('load-button');
         const storyTitle = document.getElementById('story-title');
         const storySelector = document.getElementById('story-selector');
+
+        // Cargar cuentos desde JSON al iniciar
+        async function cargarCuentos() {
+            try {
+                const response = await fetch(CUENTOS_JSON_URL);
+                if (!response.ok) {
+                    throw new Error('No se pudo cargar el archivo de cuentos');
+                }
+                storyLibrary = await response.json();
+                
+                // Limpiar el selector y agregar los cuentos cargados
+                storySelector.innerHTML = '<option value="">-- Elegí un cuento --</option>';
+                
+                storyLibrary.forEach((cuento, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = cuento.title;
+                    storySelector.appendChild(option);
+                });
+                
+                // Agregar opción de texto personalizado al final
+                const customOption = document.createElement('option');
+                customOption.value = 'custom';
+                customOption.textContent = '✏️ Pegar mi propio texto';
+                storySelector.appendChild(customOption);
+                
+                console.log(`✅ Se cargaron ${storyLibrary.length} cuentos exitosamente`);
+            } catch (error) {
+                console.error('Error cargando cuentos:', error);
+                alert('No se pudieron cargar los cuentos. Por favor recargá la página.');
+            }
+        }
+
+        // Cargar cuentos al iniciar la página
+        cargarCuentos();
 
         // Mostrar/ocultar textarea según selección
         storySelector.addEventListener('change', (e) => {
