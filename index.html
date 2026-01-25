@@ -28,7 +28,7 @@
             overflow-y: auto;
             overflow-x: hidden;
             position: relative;
-            padding: 80px 20px 20px 20px;
+            padding: 280px 20px 60px 20px;
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -65,12 +65,17 @@
         }
 
         #controls {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            z-index: 99;
             background: #2a2a2a;
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            border-top: 1px solid #444;
+            border-bottom: 1px solid #444;
         }
 
         .control-row {
@@ -154,10 +159,17 @@
         }
 
         #progress {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
             text-align: center;
             font-size: 0.85rem;
             color: #666;
-            padding: 5px;
+            padding: 10px;
+            background: #1a1a1a;
+            border-top: 1px solid #444;
         }
 
         .title {
@@ -236,12 +248,6 @@
 
     <div class="title" id="story-title">Lector de Cuentos</div>
     
-    <div id="reader-container">
-        <div id="text-display"></div>
-    </div>
-
-    <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
-
     <div id="controls">
         <div class="control-row">
             <button id="play-pause">▶ Iniciar</button>
@@ -262,6 +268,12 @@
             <button id="back-to-menu">📚 Menú</button>
         </div>
     </div>
+    
+    <div id="reader-container">
+        <div id="text-display"></div>
+    </div>
+
+    <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
 
     <script>
         // URL del archivo JSON con los cuentos (carga desde GitHub)
