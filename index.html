@@ -28,7 +28,7 @@
             overflow-y: auto;
             overflow-x: hidden;
             position: relative;
-            padding: 320px 20px 60px 20px;
+            padding: 20px 20px 40vh 20px;
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -66,7 +66,7 @@
 
         #controls {
             position: fixed;
-            top: 60px;
+            bottom: 6vh;
             left: 0;
             right: 0;
             z-index: 99;
@@ -75,7 +75,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            border-bottom: 1px solid #444;
+            border-top: 1px solid #444;
         }
 
         .control-row {
@@ -174,15 +174,15 @@
 
         .title {
             position: fixed;
-            top: 0;
+            bottom: 35vh;
             left: 0;
             right: 0;
             z-index: 100;
             text-align: center;
-            padding: 15px;
+            padding: 10px;
             background: #2a2a2a;
-            border-bottom: 1px solid #444;
-            font-size: 1.1rem;
+            border-top: 1px solid #444;
+            font-size: 1rem;
             font-weight: normal;
         }
 
@@ -246,6 +246,10 @@
         <p class="instruction">Elegí un cuento del menú o pegá tu propio texto</p>
     </div>
 
+    <div id="reader-container">
+        <div id="text-display"></div>
+    </div>
+
     <div class="title" id="story-title">Lector de Cuentos</div>
     
     <div id="controls">
@@ -267,10 +271,6 @@
             <button id="restart">⟲ Reiniciar</button>
             <button id="back-to-menu">📚 Menú</button>
         </div>
-    </div>
-    
-    <div id="reader-container">
-        <div id="text-display"></div>
     </div>
 
     <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
