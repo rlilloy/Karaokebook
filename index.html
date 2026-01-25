@@ -1,614 +1,125 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Lector de Cuentos</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+#!/usr/bin/env python3
+"""
+Script para dividir un documento Word con múltiples cuentos en archivos separados.
+Cada cuento está identificado por un Título 3 (Heading 3).
 
-        body {
-            font-family: 'Georgia', serif;
-            background: #1a1a1a;
-            color: #e0e0e0;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+Uso:
+1. Colocá el archivo mf.docx en la misma carpeta que este script
+2. Ejecutá: python dividir_cuentos.py
+3. Se crean archivos separados en la carpeta 'cuentos_separados/'
+"""
 
-        #reader-container {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            position: relative;
-            padding: 20px 20px 32vh 20px;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            scroll-behavior: smooth;
-        }
+import os
+from pathlib import Path
 
-        #text-display {
-            font-size: 1.3rem;
-            line-height: 2;
-            text-align: left;
-            max-width: 600px;
-            width: 100%;
-        }
+try:
+    from docx import Document
+    from docx.enum.style import WD_STYLE_TYPE
+except ImportError:
+    print("❌ Error: Necesitás instalar python-docx")
+    print("Ejecutá: pip install python-docx")
+    exit(1)
 
-        .text-line {
-            opacity: 0.3;
-            transition: all 0.6s ease;
-            padding: 8px 0;
-            margin: 5px 0;
-        }
 
-        .text-line.active {
-            opacity: 1;
-            font-size: 1.4rem;
-            color: #00d9ff;
-            text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
-            transform: scale(1.05);
-            font-weight: bold;
-        }
-
-        .text-line.past {
-            opacity: 0.5;
-            color: #888;
-        }
-
-        #controls {
-            position: fixed;
-            bottom: 6vh;
-            left: 0;
-            right: 0;
-            z-index: 99;
-            background: #2a2a2a;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            border-top: 1px solid #444;
-        }
-
-        .control-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            justify-content: center;
-        }
-
-        button {
-            padding: 12px 20px;
-            font-size: 0.9rem;
-            border: none;
-            border-radius: 8px;
-            background: #4a4a4a;
-            color: #e0e0e0;
-            cursor: pointer;
-            transition: background 0.3s;
-            flex: 1;
-            max-width: 150px;
-        }
-
-        button:active {
-            background: #5a5a5a;
-        }
-
-        #play-pause {
-            background: #007aff;
-            font-size: 1rem;
-            max-width: 180px;
-            padding: 14px 24px;
-        }
-
-        #play-pause:active {
-            background: #0056b3;
-        }
-
-        .speed-display {
-            text-align: center;
-            font-size: 0.9rem;
-            color: #999;
-        }
-
-        #speed-value {
-            color: #007aff;
-            font-weight: bold;
-        }
-
-        .slider-container {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        input[type="range"] {
-            flex: 1;
-            height: 6px;
-            border-radius: 3px;
-            background: #4a4a4a;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #007aff;
-            cursor: pointer;
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #007aff;
-            cursor: pointer;
-            border: none;
-        }
-
-        #progress {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            text-align: center;
-            font-size: 0.85rem;
-            color: #666;
-            padding: 10px;
-            background: #1a1a1a;
-            border-top: 1px solid #444;
-        }
-
-        .title {
-            position: fixed;
-            bottom: 28vh;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            text-align: center;
-            padding: 8px;
-            background: #2a2a2a;
-            border-top: 1px solid #444;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-
-        #load-text {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #1a1a1a;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            padding: 20px;
-            z-index: 1000;
-        }
-
-        #load-text.hidden {
-            display: none;
-        }
-
-        textarea {
-            width: 100%;
-            max-width: 500px;
-            height: 300px;
-            padding: 15px;
-            font-family: 'Georgia', serif;
-            font-size: 1rem;
-            background: #2a2a2a;
-            color: #e0e0e0;
-            border: 1px solid #444;
-            border-radius: 8px;
-            resize: vertical;
-        }
-
-        #load-button {
-            max-width: 200px;
-            background: #007aff;
-        }
-
-        .instruction {
-            color: #999;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div id="load-text">
-        <h2 style="color: #e0e0e0; margin-bottom: 20px;">Catálogo de Cuentos</h2>
-        
-        <div id="cuentos-catalog" style="
-            max-height: 70vh; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px;
-            padding: 10px;
-        ">
-            <p style="text-align: center; color: #999;">Cargando cuentos...</p>
-        </div>
-
-        <div style="margin-top: 20px; text-align: center;">
-            <button id="custom-text-btn" style="
-                padding: 12px 24px;
-                font-size: 1rem;
-                background: #4a4a4a;
-                color: #e0e0e0;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-            ">✏️ Pegar mi propio texto</button>
-        </div>
-
-        <textarea id="story-input" placeholder="Pegá el texto de tu cuento aquí..." style="display: none; margin-top: 20px;"></textarea>
-        <button id="load-custom-btn" style="display: none; margin-top: 10px;">Cargar texto</button>
-    </div>
-
-    <div id="reader-container">
-        <div id="text-display"></div>
-    </div>
-
-    <div class="title" id="story-title">Lector de Cuentos</div>
+def dividir_cuentos_por_heading3(archivo_entrada, carpeta_salida='cuentos_separados'):
+    """
+    Divide un documento con múltiples cuentos en archivos separados.
+    Usa Heading 3 como separador entre cuentos.
+    """
     
-    <div id="controls">
-        <div class="control-row">
-            <button id="play-pause">▶ Iniciar</button>
-        </div>
+    # Crear carpeta de salida
+    Path(carpeta_salida).mkdir(exist_ok=True)
+    
+    print(f"📖 Leyendo archivo: {archivo_entrada}")
+    doc = Document(archivo_entrada)
+    
+    cuentos = []
+    cuento_actual = {
+        'titulo': None,
+        'contenido': []
+    }
+    
+    # Procesar cada párrafo del documento
+    for para in doc.paragraphs:
+        # Detectar si es un Heading 3 (título de cuento)
+        if para.style.name == 'Heading 3' or 'Heading 3' in para.style.name:
+            # Si ya hay un cuento en proceso, guardarlo
+            if cuento_actual['titulo'] is not None:
+                cuentos.append(cuento_actual)
+            
+            # Iniciar nuevo cuento
+            cuento_actual = {
+                'titulo': para.text.strip(),
+                'contenido': []
+            }
+            print(f"  📝 Encontrado cuento: {para.text.strip()}")
         
-        <div class="speed-display">
-            Velocidad: <span id="speed-value">3</span> seg/fragmento
-        </div>
+        else:
+            # Agregar párrafo al cuento actual (si no está vacío)
+            if para.text.strip():
+                cuento_actual['contenido'].append(para)
+    
+    # Agregar el último cuento
+    if cuento_actual['titulo'] is not None and cuento_actual['contenido']:
+        cuentos.append(cuento_actual)
+    
+    print(f"\n✅ Total de cuentos encontrados: {len(cuentos)}")
+    print()
+    
+    # Crear un documento separado por cada cuento
+    for i, cuento in enumerate(cuentos, 1):
+        # Limpiar nombre de archivo (quitar caracteres no válidos)
+        nombre_archivo = cuento['titulo']
+        for char in ['/', '\\', ':', '*', '?', '"', '<', '>', '|']:
+            nombre_archivo = nombre_archivo.replace(char, '')
         
-        <div class="slider-container">
-            <span style="font-size: 0.8rem; color: #999;">🐌</span>
-            <input type="range" id="speed-slider" min="1" max="10" value="3" step="0.5">
-            <span style="font-size: 0.8rem; color: #999;">🚀</span>
-        </div>
-
-        <div class="control-row">
-            <button id="restart">⟲ Reiniciar</button>
-            <button id="back-to-menu">📚 Menú</button>
-        </div>
-    </div>
-
-    <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
-
-    <script>
-        // URL del archivo JSON - usando ruta relativa (mismo dominio)
-        const CUENTOS_JSON_URL = './cuentos.json';
+        # Limitar longitud del nombre
+        if len(nombre_archivo) > 50:
+            nombre_archivo = nombre_archivo[:50]
         
-        let storyLibrary = [];
-        let storyFragments = [];
-        let currentIndex = 0;
-        let isPlaying = false;
-        let intervalId = null;
-        let speed = 3000; // milliseconds
-
-        const textDisplay = document.getElementById('text-display');
-        const playPauseBtn = document.getElementById('play-pause');
-        const speedSlider = document.getElementById('speed-slider');
-        const speedValue = document.getElementById('speed-value');
-        const currentSpan = document.getElementById('current');
-        const totalSpan = document.getElementById('total');
-        const loadTextDiv = document.getElementById('load-text');
-        const storyInput = document.getElementById('story-input');
-        const storyTitle = document.getElementById('story-title');
-        const customTextBtn = document.getElementById('custom-text-btn');
-        const loadCustomBtn = document.getElementById('load-custom-btn');
-
-        // Cargar cuentos desde JSON al iniciar
-        async function cargarCuentos() {
-            try {
-                const response = await fetch(CUENTOS_JSON_URL);
-                if (!response.ok) {
-                    throw new Error('No se pudo cargar el archivo de cuentos');
-                }
-                storyLibrary = await response.json();
-                
-                // Generar catálogo de cuentos
-                const catalog = document.getElementById('cuentos-catalog');
-                catalog.innerHTML = '';
-                
-                storyLibrary.forEach((cuento, index) => {
-                    // Extraer preview (primeras 20-30 palabras hasta punto)
-                    const preview = extraerPreview(cuento.text);
-                    
-                    // Crear card del cuento
-                    const card = document.createElement('div');
-                    card.style.cssText = `
-                        background: #2a2a2a;
-                        border: 1px solid #444;
-                        border-radius: 8px;
-                        padding: 15px;
-                        cursor: pointer;
-                        transition: all 0.3s;
-                    `;
-                    
-                    card.innerHTML = `
-                        <h3 style="color: #00d9ff; margin: 0 0 10px 0; font-size: 1.1rem;">
-                            📖 ${cuento.title}
-                        </h3>
-                        <p style="color: #999; margin: 0 0 15px 0; font-size: 0.9rem; line-height: 1.6;">
-                            "${preview}..."
-                        </p>
-                        <button class="elegir-cuento-btn" data-index="${index}" style="
-                            padding: 10px 20px;
-                            font-size: 0.9rem;
-                            background: #007aff;
-                            color: white;
-                            border: none;
-                            border-radius: 6px;
-                            cursor: pointer;
-                            width: 100%;
-                        ">Elegir cuento</button>
-                    `;
-                    
-                    // Hover effect
-                    card.addEventListener('mouseenter', () => {
-                        card.style.borderColor = '#00d9ff';
-                        card.style.transform = 'scale(1.02)';
-                    });
-                    card.addEventListener('mouseleave', () => {
-                        card.style.borderColor = '#444';
-                        card.style.transform = 'scale(1)';
-                    });
-                    
-                    catalog.appendChild(card);
-                });
-                
-                // Event listeners para los botones "Elegir cuento"
-                document.querySelectorAll('.elegir-cuento-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        console.log('🎯 Click en "Elegir cuento"');
-                        const index = parseInt(btn.dataset.index);
-                        const cuento = storyLibrary[index];
-                        console.log('📖 Cargando cuento:', cuento.title);
-                        loadStory(cuento.text, cuento.title);
-                    });
-                });
-                
-                console.log(`✅ Se cargaron ${storyLibrary.length} cuentos exitosamente`);
-            } catch (error) {
-                console.error('Error cargando cuentos:', error);
-                document.getElementById('cuentos-catalog').innerHTML = 
-                    '<p style="color: #ff6b6b; text-align: center;">Error al cargar cuentos. Intentá recargar la página.</p>';
-            }
-        }
-
-        // Función para extraer preview (20-30 palabras hasta punto)
-        function extraerPreview(texto) {
-            const palabras = texto.trim().split(/\s+/);
-            let preview = '';
-            let contador = 0;
-            
-            for (let palabra of palabras) {
-                preview += (preview ? ' ' : '') + palabra;
-                contador++;
-                
-                // Si llegamos a 20 palabras y hay un punto, cortar
-                if (contador >= 20 && palabra.match(/[.!?]$/)) {
-                    break;
-                }
-                
-                // Forzar corte en 30 palabras
-                if (contador >= 30) {
-                    break;
-                }
-            }
-            
-            return preview;
-        }
-
-        // Cargar cuentos al iniciar la página
-        cargarCuentos();
-
-        function loadStory(text, title = "Lector de Cuentos") {
-            console.log('📚 loadStory() ejecutado');
-            console.log('  - Título:', title);
-            console.log('  - Texto length:', text.length);
-            
-            // Dividir el texto en fragmentos inteligentes (~20 palabras, terminando en . o ,)
-            storyFragments = dividirTextoInteligente(text);
-            console.log('  - Fragmentos creados:', storyFragments.length);
-            
-            currentIndex = 0;
-            totalSpan.textContent = storyFragments.length;
-            storyTitle.textContent = title;
-            
-            showFragment(0);
-            
-            console.log('  - Ocultando menú...');
-            loadTextDiv.classList.add('hidden');
-            console.log('  - ¿Menú oculto?', loadTextDiv.classList.contains('hidden'));
-        }
-
-        function dividirTextoInteligente(texto) {
-            // Limpiar el texto
-            texto = texto.replace(/\s+/g, ' ').trim();
-            
-            const fragmentos = [];
-            const palabras = texto.split(' ');
-            let fragmentoActual = '';
-            let contadorPalabras = 0;
-            
-            for (let i = 0; i < palabras.length; i++) {
-                const palabra = palabras[i];
-                fragmentoActual += (fragmentoActual ? ' ' : '') + palabra;
-                contadorPalabras++;
-                
-                // Buscar si termina en punto o coma
-                const terminaEnPuntuacion = palabra.match(/[.,;:]$/);
-                
-                // Crear fragmento si:
-                // 1. Tiene al menos 20 palabras Y termina en puntuación
-                // 2. O tiene más de 30 palabras (forzar corte)
-                if ((contadorPalabras >= 20 && terminaEnPuntuacion) || contadorPalabras >= 30) {
-                    fragmentos.push(fragmentoActual.trim());
-                    fragmentoActual = '';
-                    contadorPalabras = 0;
-                }
-            }
-            
-            // Agregar último fragmento si quedó algo
-            if (fragmentoActual.trim()) {
-                fragmentos.push(fragmentoActual.trim());
-            }
-            
-            return fragmentos;
-        }
-
-        function showFragment(index) {
-            if (index >= 0 && index < storyFragments.length) {
-                currentIndex = index;
-                
-                // Mostrar todas las líneas con la actual destacada
-                textDisplay.innerHTML = '';
-                
-                storyFragments.forEach((fragment, i) => {
-                    const line = document.createElement('div');
-                    line.className = 'text-line';
-                    line.textContent = fragment;
-                    line.id = `line-${i}`;
-                    
-                    if (i === index) {
-                        line.classList.add('active');
-                    } else if (i < index) {
-                        line.classList.add('past');
-                    }
-                    
-                    textDisplay.appendChild(line);
-                });
-                
-                // Scroll tipo TELEPROMPTER: línea activa siempre arriba
-                setTimeout(() => {
-                    const activeLine = document.getElementById(`line-${index}`);
-                    const container = document.getElementById('reader-container');
-                    
-                    if (activeLine && container) {
-                        // Scroll INSTANTÁNEO (sin smooth) para teleprompter
-                        const scrollPosition = activeLine.offsetTop - 20;
-                        container.scrollTop = scrollPosition;
-                        
-                        console.log('📍 Scroll a línea', index, '- offset:', scrollPosition);
-                    }
-                }, 50);
-                
-                currentSpan.textContent = index + 1;
-            }
-        }
-
-        function play() {
-            if (storyFragments.length === 0) return;
-            
-            isPlaying = true;
-            playPauseBtn.textContent = '⏸ Pausar';
-            
-            console.log('▶ Play iniciado - velocidad:', speed, 'ms', 'fragmentos totales:', storyFragments.length);
-            
-            intervalId = setInterval(() => {
-                console.log('⏩ Avanzando de', currentIndex, 'a', currentIndex + 1);
-                if (currentIndex < storyFragments.length - 1) {
-                    showFragment(currentIndex + 1);
-                } else {
-                    console.log('✅ Cuento terminado');
-                    pause();
-                }
-            }, speed);
-        }
-
-        function pause() {
-            isPlaying = false;
-            playPauseBtn.textContent = '▶ Continuar';
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
-            }
-        }
-
-        // Event Listeners
+        ruta_salida = os.path.join(carpeta_salida, f"{nombre_archivo}.docx")
         
-        // Botón de texto personalizado
-        customTextBtn.addEventListener('click', () => {
-            storyInput.style.display = 'block';
-            loadCustomBtn.style.display = 'block';
-            customTextBtn.style.display = 'none';
-        });
+        # Crear nuevo documento
+        nuevo_doc = Document()
+        
+        # Agregar título como Heading 3
+        nuevo_doc.add_heading(cuento['titulo'], level=3)
+        
+        # Agregar contenido
+        for para in cuento['contenido']:
+            p = nuevo_doc.add_paragraph()
+            p.text = para.text
+            # Copiar el estilo del párrafo original
+            try:
+                p.style = para.style
+            except:
+                pass
+        
+        # Guardar documento
+        nuevo_doc.save(ruta_salida)
+        print(f"{i}. ✅ Creado: {nombre_archivo}.docx ({len(cuento['contenido'])} párrafos)")
+    
+    print()
+    print(f"🎉 ¡Listo! Se crearon {len(cuentos)} archivos en '{carpeta_salida}/'")
+    print()
+    print("📋 Próximos pasos:")
+    print(f"   1. Verificá los archivos en la carpeta '{carpeta_salida}/'")
+    print(f"   2. Copiá esos archivos a la carpeta 'cuentos/'")
+    print("   3. Ejecutá: python convertir_cuentos.py")
+    print("   4. Subí el cuentos.json actualizado a GitHub")
 
-        // Cargar texto personalizado
-        loadCustomBtn.addEventListener('click', () => {
-            const text = storyInput.value.trim();
-            if (text) {
-                loadStory(text, "Tu Cuento");
-            } else {
-                alert('Por favor pegá un texto');
-            }
-        });
 
-        playPauseBtn.addEventListener('click', () => {
-            console.log('🔘 Botón clickeado');
-            console.log('📊 Estado actual - isPlaying:', isPlaying, 'fragmentos:', storyFragments.length, 'speed:', speed);
-            
-            if (storyFragments.length === 0) {
-                console.log('❌ No hay fragmentos cargados');
-                return;
-            }
-            
-            if (isPlaying) {
-                console.log('⏸ Pausando...');
-                pause();
-            } else {
-                console.log('▶ Iniciando play...');
-                play();
-            }
-        });
-
-        speedSlider.addEventListener('input', (e) => {
-            speed = parseFloat(e.target.value) * 1000;
-            speedValue.textContent = e.target.value;
-            
-            if (isPlaying) {
-                pause();
-                play();
-            }
-        });
-
-        document.getElementById('restart').addEventListener('click', () => {
-            pause();
-            showFragment(0);
-        });
-
-        document.getElementById('back-to-menu').addEventListener('click', () => {
-            pause();
-            storyFragments = [];
-            currentIndex = 0;
-            textDisplay.innerHTML = '';
-            storyTitle.textContent = 'Lector de Cuentos';
-            loadTextDiv.classList.remove('hidden');
-        });
-
-        // Prevenir zoom en iOS
-        document.addEventListener('gesturestart', (e) => e.preventDefault());
-    </script>
-</body>
-</html>
+if __name__ == '__main__':
+    archivo = 'mf.docx'
+    
+    if not os.path.exists(archivo):
+        print(f"❌ Error: No se encontró el archivo '{archivo}'")
+        print(f"   Asegurate de que esté en la misma carpeta que este script")
+        exit(1)
+    
+    print("=" * 60)
+    print("  DIVIDIR CUENTOS POR HEADING 3")
+    print("=" * 60)
+    print()
+    
+    dividir_cuentos_por_heading3(archivo)

@@ -235,16 +235,33 @@
 </head>
 <body>
     <div id="load-text">
-        <h2 style="color: #e0e0e0;">Seleccioná un cuento</h2>
+        <h2 style="color: #e0e0e0; margin-bottom: 20px;">Catálogo de Cuentos</h2>
         
-        <select id="story-selector" style="width: 100%; max-width: 500px; padding: 15px; font-size: 1rem; background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; border-radius: 8px; margin-bottom: 20px;">
-            <option value="">Cargando cuentos...</option>
-        </select>
+        <div id="cuentos-catalog" style="
+            max-height: 70vh; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px;
+            padding: 10px;
+        ">
+            <p style="text-align: center; color: #999;">Cargando cuentos...</p>
+        </div>
 
-        <textarea id="story-input" placeholder="Pegá el texto de tu cuento aquí..." style="display: none;"></textarea>
-        
-        <button id="load-button">Comenzar lectura</button>
-        <p class="instruction">Elegí un cuento del menú o pegá tu propio texto</p>
+        <div style="margin-top: 20px; text-align: center;">
+            <button id="custom-text-btn" style="
+                padding: 12px 24px;
+                font-size: 1rem;
+                background: #4a4a4a;
+                color: #e0e0e0;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+            ">✏️ Pegar mi propio texto</button>
+        </div>
+
+        <textarea id="story-input" placeholder="Pegá el texto de tu cuento aquí..." style="display: none; margin-top: 20px;"></textarea>
+        <button id="load-custom-btn" style="display: none; margin-top: 10px;">Cargar texto</button>
     </div>
 
     <div id="reader-container">
@@ -277,8 +294,8 @@
     <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
 
     <script>
-        // URL del archivo JSON con los cuentos (carga desde GitHub)
-        const CUENTOS_JSON_URL = 'https://raw.githubusercontent.com/rlilloy/Karaokebook/main/cuentos.json';
+        // URL del archivo JSON - usando ruta relativa (mismo dominio)
+        const CUENTOS_JSON_URL = './cuentos.json';
         
         let storyLibrary = [];
         let storyFragments = [];
@@ -295,9 +312,9 @@
         const totalSpan = document.getElementById('total');
         const loadTextDiv = document.getElementById('load-text');
         const storyInput = document.getElementById('story-input');
-        const loadButton = document.getElementById('load-button');
         const storyTitle = document.getElementById('story-title');
-        const storySelector = document.getElementById('story-selector');
+        const customTextBtn = document.getElementById('custom-text-btn');
+        const loadCustomBtn = document.getElementById('load-custom-btn');
 
         // Cargar cuentos desde JSON al iniciar
         async function cargarCuentos() {
@@ -308,49 +325,122 @@
                 }
                 storyLibrary = await response.json();
                 
-                // Limpiar el selector y agregar los cuentos cargados
-                storySelector.innerHTML = '<option value="">-- Elegí un cuento --</option>';
+                // Generar catálogo de cuentos
+                const catalog = document.getElementById('cuentos-catalog');
+                catalog.innerHTML = '';
                 
                 storyLibrary.forEach((cuento, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = cuento.title;
-                    storySelector.appendChild(option);
+                    // Extraer preview (primeras 20-30 palabras hasta punto)
+                    const preview = extraerPreview(cuento.text);
+                    
+                    // Crear card del cuento
+                    const card = document.createElement('div');
+                    card.style.cssText = `
+                        background: #2a2a2a;
+                        border: 1px solid #444;
+                        border-radius: 8px;
+                        padding: 15px;
+                        cursor: pointer;
+                        transition: all 0.3s;
+                    `;
+                    
+                    card.innerHTML = `
+                        <h3 style="color: #00d9ff; margin: 0 0 10px 0; font-size: 1.1rem;">
+                            📖 ${cuento.title}
+                        </h3>
+                        <p style="color: #999; margin: 0 0 15px 0; font-size: 0.9rem; line-height: 1.6;">
+                            "${preview}..."
+                        </p>
+                        <button class="elegir-cuento-btn" data-index="${index}" style="
+                            padding: 10px 20px;
+                            font-size: 0.9rem;
+                            background: #007aff;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            width: 100%;
+                        ">Elegir cuento</button>
+                    `;
+                    
+                    // Hover effect
+                    card.addEventListener('mouseenter', () => {
+                        card.style.borderColor = '#00d9ff';
+                        card.style.transform = 'scale(1.02)';
+                    });
+                    card.addEventListener('mouseleave', () => {
+                        card.style.borderColor = '#444';
+                        card.style.transform = 'scale(1)';
+                    });
+                    
+                    catalog.appendChild(card);
                 });
                 
-                // Agregar opción de texto personalizado al final
-                const customOption = document.createElement('option');
-                customOption.value = 'custom';
-                customOption.textContent = '✏️ Pegar mi propio texto';
-                storySelector.appendChild(customOption);
+                // Event listeners para los botones "Elegir cuento"
+                document.querySelectorAll('.elegir-cuento-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        console.log('🎯 Click en "Elegir cuento"');
+                        const index = parseInt(btn.dataset.index);
+                        const cuento = storyLibrary[index];
+                        console.log('📖 Cargando cuento:', cuento.title);
+                        loadStory(cuento.text, cuento.title);
+                    });
+                });
                 
                 console.log(`✅ Se cargaron ${storyLibrary.length} cuentos exitosamente`);
             } catch (error) {
                 console.error('Error cargando cuentos:', error);
-                alert('No se pudieron cargar los cuentos. Por favor recargá la página.');
+                document.getElementById('cuentos-catalog').innerHTML = 
+                    '<p style="color: #ff6b6b; text-align: center;">Error al cargar cuentos. Intentá recargar la página.</p>';
             }
+        }
+
+        // Función para extraer preview (20-30 palabras hasta punto)
+        function extraerPreview(texto) {
+            const palabras = texto.trim().split(/\s+/);
+            let preview = '';
+            let contador = 0;
+            
+            for (let palabra of palabras) {
+                preview += (preview ? ' ' : '') + palabra;
+                contador++;
+                
+                // Si llegamos a 20 palabras y hay un punto, cortar
+                if (contador >= 20 && palabra.match(/[.!?]$/)) {
+                    break;
+                }
+                
+                // Forzar corte en 30 palabras
+                if (contador >= 30) {
+                    break;
+                }
+            }
+            
+            return preview;
         }
 
         // Cargar cuentos al iniciar la página
         cargarCuentos();
 
-        // Mostrar/ocultar textarea según selección
-        storySelector.addEventListener('change', (e) => {
-            if (e.target.value === 'custom') {
-                storyInput.style.display = 'block';
-            } else {
-                storyInput.style.display = 'none';
-            }
-        });
-
         function loadStory(text, title = "Lector de Cuentos") {
+            console.log('📚 loadStory() ejecutado');
+            console.log('  - Título:', title);
+            console.log('  - Texto length:', text.length);
+            
             // Dividir el texto en fragmentos inteligentes (~20 palabras, terminando en . o ,)
             storyFragments = dividirTextoInteligente(text);
+            console.log('  - Fragmentos creados:', storyFragments.length);
+            
             currentIndex = 0;
             totalSpan.textContent = storyFragments.length;
             storyTitle.textContent = title;
+            
             showFragment(0);
+            
+            console.log('  - Ocultando menú...');
             loadTextDiv.classList.add('hidden');
+            console.log('  - ¿Menú oculto?', loadTextDiv.classList.contains('hidden'));
         }
 
         function dividirTextoInteligente(texto) {
@@ -434,10 +524,14 @@
             isPlaying = true;
             playPauseBtn.textContent = '⏸ Pausar';
             
+            console.log('▶ Play iniciado - velocidad:', speed, 'ms', 'fragmentos totales:', storyFragments.length);
+            
             intervalId = setInterval(() => {
+                console.log('⏩ Avanzando de', currentIndex, 'a', currentIndex + 1);
                 if (currentIndex < storyFragments.length - 1) {
                     showFragment(currentIndex + 1);
                 } else {
+                    console.log('✅ Cuento terminado');
                     pause();
                 }
             }, speed);
@@ -453,21 +547,21 @@
         }
 
         // Event Listeners
-        loadButton.addEventListener('click', () => {
-            const selectedIndex = storySelector.value;
-            
-            if (selectedIndex === 'custom') {
-                const text = storyInput.value.trim();
-                if (text) {
-                    loadStory(text, "Tu Cuento");
-                } else {
-                    alert('Por favor pegá un texto');
-                }
-            } else if (selectedIndex !== '') {
-                const story = storyLibrary[parseInt(selectedIndex)];
-                loadStory(story.text, story.title);
+        
+        // Botón de texto personalizado
+        customTextBtn.addEventListener('click', () => {
+            storyInput.style.display = 'block';
+            loadCustomBtn.style.display = 'block';
+            customTextBtn.style.display = 'none';
+        });
+
+        // Cargar texto personalizado
+        loadCustomBtn.addEventListener('click', () => {
+            const text = storyInput.value.trim();
+            if (text) {
+                loadStory(text, "Tu Cuento");
             } else {
-                alert('Por favor seleccioná un cuento');
+                alert('Por favor pegá un texto');
             }
         });
 
@@ -511,7 +605,6 @@
             textDisplay.innerHTML = '';
             storyTitle.textContent = 'Lector de Cuentos';
             loadTextDiv.classList.remove('hidden');
-            storySelector.value = '';
         });
 
         // Prevenir zoom en iOS
