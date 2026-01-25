@@ -357,11 +357,33 @@
                     textDisplay.appendChild(line);
                 });
                 
+<<<<<<< HEAD
                 // Scroll automático para mantener la línea activa visible
                 const activeLine = textDisplay.querySelector('.active');
                 if (activeLine) {
                     activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
+=======
+                // Scroll automático MEJORADO para mantener la línea activa en el centro
+                setTimeout(() => {
+                    const activeLine = document.getElementById(`line-${index}`);
+                    const container = document.getElementById('reader-container');
+                    
+                    if (activeLine && container) {
+                        const containerHeight = container.clientHeight;
+                        const lineTop = activeLine.offsetTop;
+                        const lineHeight = activeLine.clientHeight;
+                        
+                        // Calcular scroll para centrar la línea
+                        const scrollPosition = lineTop - (containerHeight / 2) + (lineHeight / 2);
+                        
+                        container.scrollTo({
+                            top: scrollPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 100);
+>>>>>>> parent of a73e219 (s)
                 
                 currentSpan.textContent = index + 1;
             }
