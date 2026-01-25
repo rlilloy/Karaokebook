@@ -343,13 +343,48 @@
         });
 
         function loadStory(text, title = "Lector de Cuentos") {
-            // Dividir el texto en fragmentos (por líneas vacías o saltos de línea)
-            storyFragments = text.split('\n').filter(line => line.trim() !== '');
+            // Dividir el texto en fragmentos inteligentes (~20 palabras, terminando en . o ,)
+            storyFragments = dividirTextoInteligente(text);
             currentIndex = 0;
             totalSpan.textContent = storyFragments.length;
             storyTitle.textContent = title;
             showFragment(0);
             loadTextDiv.classList.add('hidden');
+        }
+
+        function dividirTextoInteligente(texto) {
+            // Limpiar el texto
+            texto = texto.replace(/\s+/g, ' ').trim();
+            
+            const fragmentos = [];
+            const palabras = texto.split(' ');
+            let fragmentoActual = '';
+            let contadorPalabras = 0;
+            
+            for (let i = 0; i < palabras.length; i++) {
+                const palabra = palabras[i];
+                fragmentoActual += (fragmentoActual ? ' ' : '') + palabra;
+                contadorPalabras++;
+                
+                // Buscar si termina en punto o coma
+                const terminaEnPuntuacion = palabra.match(/[.,;:]$/);
+                
+                // Crear fragmento si:
+                // 1. Tiene al menos 20 palabras Y termina en puntuación
+                // 2. O tiene más de 30 palabras (forzar corte)
+                if ((contadorPalabras >= 20 && terminaEnPuntuacion) || contadorPalabras >= 30) {
+                    fragmentos.push(fragmentoActual.trim());
+                    fragmentoActual = '';
+                    contadorPalabras = 0;
+                }
+            }
+            
+            // Agregar último fragmento si quedó algo
+            if (fragmentoActual.trim()) {
+                fragmentos.push(fragmentoActual.trim());
+            }
+            
+            return fragmentos;
         }
 
         function showFragment(index) {
