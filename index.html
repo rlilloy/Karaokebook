@@ -410,25 +410,19 @@
                     textDisplay.appendChild(line);
                 });
                 
-                // Scroll automático MEJORADO para mantener la línea activa en el centro
+                // Scroll tipo TELEPROMPTER: línea activa siempre arriba
                 setTimeout(() => {
                     const activeLine = document.getElementById(`line-${index}`);
                     const container = document.getElementById('reader-container');
                     
                     if (activeLine && container) {
-                        const containerHeight = container.clientHeight;
-                        const lineTop = activeLine.offsetTop;
-                        const lineHeight = activeLine.clientHeight;
+                        // Scroll INSTANTÁNEO (sin smooth) para teleprompter
+                        const scrollPosition = activeLine.offsetTop - 20;
+                        container.scrollTop = scrollPosition;
                         
-                        // Calcular scroll para centrar la línea
-                        const scrollPosition = lineTop - (containerHeight / 2) + (lineHeight / 2);
-                        
-                        container.scrollTo({
-                            top: scrollPosition,
-                            behavior: 'smooth'
-                        });
+                        console.log('📍 Scroll a línea', index, '- offset:', scrollPosition);
                     }
-                }, 100);
+                }, 50);
                 
                 currentSpan.textContent = index + 1;
             }
@@ -478,13 +472,19 @@
         });
 
         playPauseBtn.addEventListener('click', () => {
+            console.log('🔘 Botón clickeado');
+            console.log('📊 Estado actual - isPlaying:', isPlaying, 'fragmentos:', storyFragments.length, 'speed:', speed);
+            
             if (storyFragments.length === 0) {
+                console.log('❌ No hay fragmentos cargados');
                 return;
             }
             
             if (isPlaying) {
+                console.log('⏸ Pausando...');
                 pause();
             } else {
+                console.log('▶ Iniciando play...');
                 play();
             }
         });
