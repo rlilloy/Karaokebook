@@ -287,7 +287,6 @@
 
         <div class="control-row">
             <button id="restart">⟲ Reiniciar</button>
-            <button id="narrate">🔊 Narrar</button>
             <button id="back-to-menu">📚 Menú</button>
         </div>
     </div>
@@ -306,14 +305,8 @@
         let speed = 3000; // milliseconds
         
         // Variables para narración
-        let isNarrating = false;
-        let speechSynth = window.speechSynthesis;
-        let currentUtterance = null;
         
         // Variables para narración
-        let isNarrating = false;
-        let speechSynth = window.speechSynthesis;
-        let currentUtterance = null;
 
         const textDisplay = document.getElementById('text-display');
         const playPauseBtn = document.getElementById('play-pause');
@@ -326,7 +319,6 @@
         const storyTitle = document.getElementById('story-title');
         const customTextBtn = document.getElementById('custom-text-btn');
         const loadCustomBtn = document.getElementById('load-custom-btn');
-        const narrateBtn = document.getElementById('narrate');
 
         // Cargar cuentos desde JSON al iniciar
         async function cargarCuentos() {
@@ -436,9 +428,6 @@
         cargarCuentos();
 
         // Cargar voces de TTS (necesario en algunos navegadores)
-        if (speechSynth.onvoiceschanged !== undefined) {
-            speechSynth.onvoiceschanged = () => {
-                console.log('🎤 Voces de narración cargadas:', speechSynth.getVoices().length);
             };
         }
 
@@ -569,7 +558,6 @@
         
         function getSpanishVoice() {
             // Buscar voz en español del sistema
-            const voices = speechSynth.getVoices();
             
             // Prioridad: español (cualquier región)
             let spanishVoice = voices.find(voice => 
@@ -585,96 +573,11 @@
             return spanishVoice;
         }
 
-        function narrateFragment(index) {
-            if (index >= storyFragments.length) {
-                stopNarration();
-                return;
-            }
 
-            // Cancelar narración anterior si existe
-            if (currentUtterance) {
-                speechSynth.cancel();
-            }
 
-            const text = storyFragments[index];
-            currentUtterance = new SpeechSynthesisUtterance(text);
-            
-            // Configurar voz en español
-            const spanishVoice = getSpanishVoice();
-            if (spanishVoice) {
-                currentUtterance.voice = spanishVoice;
-                currentUtterance.lang = spanishVoice.lang;
-            } else {
-                currentUtterance.lang = 'es-ES'; // Fallback a español
-            }
-            
-            // Configurar parámetros de voz
-            currentUtterance.rate = 0.9; // Velocidad (0.1 a 10, 1 es normal)
-            currentUtterance.pitch = 1; // Tono (0 a 2, 1 es normal)
-            currentUtterance.volume = 1; // Volumen (0 a 1)
 
-            // Cuando termina de narrar, avanzar al siguiente
-            currentUtterance.onend = () => {
-                if (isNarrating && currentIndex < storyFragments.length - 1) {
-                    showFragment(currentIndex + 1);
-                    setTimeout(() => {
-                        narrateFragment(currentIndex);
-                    }, 500); // Pequeña pausa entre fragmentos
-                } else {
-                    stopNarration();
-                }
-            };
-
-            currentUtterance.onerror = (error) => {
-                console.error('Error en narración:', error);
-                stopNarration();
-            };
-
-            // Iniciar narración
-            speechSynth.speak(currentUtterance);
-            console.log('🔊 Narrando fragmento', index);
-        }
-
-        function startNarration() {
-            if (storyFragments.length === 0) return;
-
-            // Detener play automático si está corriendo
-            if (isPlaying) {
-                pause();
-            }
-
-            isNarrating = true;
-            narrateBtn.textContent = '⏸ Pausar voz';
-            narrateBtn.style.background = '#ff6b6b';
-            
-            console.log('🎙️ Iniciando narración desde fragmento', currentIndex);
-            narrateFragment(currentIndex);
-        }
-
-        function stopNarration() {
-            isNarrating = false;
-            narrateBtn.textContent = '🔊 Narrar';
-            narrateBtn.style.background = '#4a4a4a';
-            
-            if (currentUtterance) {
-                speechSynth.cancel();
-                currentUtterance = null;
-            }
-            
-            console.log('⏹️ Narración detenida');
-        }
-
-        function toggleNarration() {
-            if (isNarrating) {
-                stopNarration();
-            } else {
-                startNarration();
-            }
-        }
 
         // Cargar voces cuando estén disponibles
-        if (speechSynth.onvoiceschanged !== undefined) {
-            speechSynth.onvoiceschanged = () => {
                 const spanishVoice = getSpanishVoice();
                 if (spanishVoice) {
                     console.log('✅ Voz en español disponible:', spanishVoice.name, spanishVoice.lang);
@@ -684,75 +587,8 @@
 
         // ===== FUNCIONES DE NARRACIÓN =====
         
-        function startNarration() {
-            if (storyFragments.length === 0) return;
-            
-            isNarrating = true;
-            narrateBtn.textContent = '⏹ Detener';
-            console.log('🔊 Narración iniciada');
-            
-            narrateCurrentFragment();
-        }
 
-        function stopNarration() {
-            isNarrating = false;
-            narrateBtn.textContent = '🔊 Narrar';
-            
-            // Detener voz actual
-            if (speechSynth.speaking) {
-                speechSynth.cancel();
-            }
-            
-            console.log('⏹ Narración detenida');
-        }
 
-        function narrateCurrentFragment() {
-            if (!isNarrating || currentIndex >= storyFragments.length) {
-                stopNarration();
-                return;
-            }
-
-            const text = storyFragments[currentIndex];
-            
-            // Cancelar cualquier narración previa
-            speechSynth.cancel();
-            
-            // Crear nueva narración
-            currentUtterance = new SpeechSynthesisUtterance(text);
-            
-            // Configurar voz en español si está disponible
-            const voices = speechSynth.getVoices();
-            const spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
-            if (spanishVoice) {
-                currentUtterance.voice = spanishVoice;
-            }
-            
-            // Configurar parámetros de voz
-            currentUtterance.rate = 0.9; // Velocidad (0.1 a 10)
-            currentUtterance.pitch = 1; // Tono (0 a 2)
-            currentUtterance.volume = 1; // Volumen (0 a 1)
-            
-            // Cuando termina de narrar un fragmento, pasar al siguiente
-            currentUtterance.onend = () => {
-                if (isNarrating && currentIndex < storyFragments.length - 1) {
-                    showFragment(currentIndex + 1);
-                    // Pequeña pausa entre fragmentos
-                    setTimeout(() => {
-                        narrateCurrentFragment();
-                    }, 500);
-                } else {
-                    stopNarration();
-                }
-            };
-            
-            currentUtterance.onerror = (event) => {
-                console.error('❌ Error en narración:', event.error);
-                stopNarration();
-            };
-            
-            console.log('📢 Narrando fragmento', currentIndex + 1, ':', text.substring(0, 50) + '...');
-            speechSynth.speak(currentUtterance);
-        }
 
         // ===== FIN FUNCIONES DE NARRACIÓN =====
 
@@ -810,22 +646,6 @@
         });
 
         // Botón de narración
-        narrateBtn.addEventListener('click', () => {
-            if (storyFragments.length === 0) {
-                console.log('❌ No hay fragmentos cargados');
-                return;
-            }
-            
-            if (isNarrating) {
-                stopNarration();
-            } else {
-                // Si está en auto-play, pausarlo
-                if (isPlaying) {
-                    pause();
-                }
-                startNarration();
-            }
-        });
 
         document.getElementById('back-to-menu').addEventListener('click', () => {
             pause();
