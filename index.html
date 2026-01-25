@@ -427,10 +427,6 @@
         // Cargar cuentos al iniciar la página
         cargarCuentos();
 
-        // Cargar voces de TTS (necesario en algunos navegadores)
-            };
-        }
-
         function loadStory(text, title = "Lector de Cuentos") {
             console.log('📚 loadStory() ejecutado');
             console.log('  - Título:', title);
@@ -556,37 +552,8 @@
 
         // ========== FUNCIONES DE NARRACIÓN ==========
         
-        function getSpanishVoice() {
-            // Buscar voz en español del sistema
-            
-            // Prioridad: español (cualquier región)
-            let spanishVoice = voices.find(voice => 
-                voice.lang.startsWith('es-') || voice.lang === 'es'
-            );
-            
-            // Si no hay voz en español, usar la primera disponible
-            if (!spanishVoice && voices.length > 0) {
-                spanishVoice = voices[0];
-                console.log('⚠️ No se encontró voz en español, usando:', spanishVoice.name);
-            }
-            
-            return spanishVoice;
-        }
 
-
-
-
-
-        // Cargar voces cuando estén disponibles
-                const spanishVoice = getSpanishVoice();
-                if (spanishVoice) {
-                    console.log('✅ Voz en español disponible:', spanishVoice.name, spanishVoice.lang);
-                }
-            };
-        }
-
-        // ===== FUNCIONES DE NARRACIÓN =====
-        
+        // Event Listeners
 
 
 
@@ -641,7 +608,6 @@
 
         document.getElementById('restart').addEventListener('click', () => {
             pause();
-            stopNarration(); // Detener narración si está activa
             showFragment(0);
         });
 
