@@ -71,10 +71,10 @@
             right: 0;
             z-index: 99;
             background: #2a2a2a;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             border-top: 1px solid #444;
         }
 
@@ -86,8 +86,8 @@
         }
 
         button {
-            padding: 15px 25px;
-            font-size: 1rem;
+            padding: 12px 20px;
+            font-size: 0.9rem;
             border: none;
             border-radius: 8px;
             background: #4a4a4a;
@@ -104,8 +104,9 @@
 
         #play-pause {
             background: #007aff;
-            font-size: 1.2rem;
-            max-width: 200px;
+            font-size: 1rem;
+            max-width: 180px;
+            padding: 14px 24px;
         }
 
         #play-pause:active {
@@ -179,11 +180,11 @@
             right: 0;
             z-index: 100;
             text-align: center;
-            padding: 10px;
+            padding: 12px;
             background: #2a2a2a;
             border-top: 1px solid #444;
-            font-size: 1rem;
-            font-weight: normal;
+            font-size: 1.2rem;
+            font-weight: bold;
         }
 
         #load-text {
@@ -398,6 +399,7 @@
                     const line = document.createElement('div');
                     line.className = 'text-line';
                     line.textContent = fragment;
+                    line.id = `line-${i}`;
                     
                     if (i === index) {
                         line.classList.add('active');
@@ -408,11 +410,25 @@
                     textDisplay.appendChild(line);
                 });
                 
-                // Scroll automático para mantener la línea activa visible
-                const activeLine = textDisplay.querySelector('.active');
-                if (activeLine) {
-                    activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
+                // Scroll automático MEJORADO para mantener la línea activa en el centro
+                setTimeout(() => {
+                    const activeLine = document.getElementById(`line-${index}`);
+                    const container = document.getElementById('reader-container');
+                    
+                    if (activeLine && container) {
+                        const containerHeight = container.clientHeight;
+                        const lineTop = activeLine.offsetTop;
+                        const lineHeight = activeLine.clientHeight;
+                        
+                        // Calcular scroll para centrar la línea
+                        const scrollPosition = lineTop - (containerHeight / 2) + (lineHeight / 2);
+                        
+                        container.scrollTo({
+                            top: scrollPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 100);
                 
                 currentSpan.textContent = index + 1;
             }
