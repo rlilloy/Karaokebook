@@ -279,12 +279,12 @@
         </div>
         
         <div class="speed-display">
-            Velocidad: <span id="speed-value">3</span> seg/fragmento
+            Velocidad: <span id="speed-value">7</span> seg/fragmento
         </div>
         
         <div class="slider-container">
             <span style="font-size: 0.8rem; color: #999;">🐌</span>
-            <input type="range" id="speed-slider" min="1" max="10" value="3" step="0.5">
+            <input type="range" id="speed-slider" min="1" max="10" value="7" step="0.5">
             <span style="font-size: 0.8rem; color: #999;">🚀</span>
         </div>
 
@@ -305,7 +305,6 @@
         let currentIndex = 0;
         let isPlaying = false;
         let intervalId = null;
-        let speed = 7000; // milliseconds
         
         // Variables para narración
         
@@ -315,6 +314,9 @@
         const playPauseBtn = document.getElementById('play-pause');
         const speedSlider = document.getElementById('speed-slider');
         const speedValue = document.getElementById('speed-value');
+        
+        // Leer velocidad inicial del slider (sin redundancia)
+        let speed = parseFloat(speedSlider.value) * 1000; // milliseconds
         const currentSpan = document.getElementById('current');
         const totalSpan = document.getElementById('total');
         const loadTextDiv = document.getElementById('load-text');

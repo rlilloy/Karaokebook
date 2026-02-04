@@ -28,7 +28,7 @@
             overflow-y: auto;
             overflow-x: hidden;
             position: relative;
-            padding: 20px 20px 32vh 20px;
+            padding: 20px 20px 45vh 20px;
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -66,15 +66,15 @@
 
         #controls {
             position: fixed;
-            bottom: 6vh;
+            bottom: 8vh;
             left: 0;
             right: 0;
-            z-index: 99;
+            z-index: 999;
             background: #2a2a2a;
-            padding: 10px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             border-top: 1px solid #444;
         }
 
@@ -105,8 +105,8 @@
         #play-pause {
             background: #007aff;
             font-size: 1rem;
-            max-width: 180px;
-            padding: 14px 24px;
+            padding: 12px 24px;
+            font-weight: bold;
         }
 
         #play-pause:active {
@@ -175,7 +175,7 @@
 
         .title {
             position: fixed;
-            bottom: 28vh;
+            bottom: 32vh;
             left: 0;
             right: 0;
             z-index: 100;
@@ -260,7 +260,10 @@
             ">✏️ Pegar mi propio texto</button>
         </div>
 
-        <textarea id="story-input" placeholder="Pegá el texto de tu cuento aquí..." style="display: none; margin-top: 20px;"></textarea>
+        <textarea id="story-input" placeholder="Pegá el texto de tu cuento aquí..." style="display: none; margin-top: 20px;" maxlength="3000"></textarea>
+        <div id="char-counter" style="display: none; text-align: right; color: #999; font-size: 0.9rem; margin-top: 5px;">
+            Caracteres: <span id="char-count">0</span> / 3000 (≈3 minutos)
+        </div>
         <button id="load-custom-btn" style="display: none; margin-top: 10px;">Cargar texto</button>
     </div>
 
@@ -302,7 +305,7 @@
         let currentIndex = 0;
         let isPlaying = false;
         let intervalId = null;
-        let speed = 3000; // milliseconds
+        let speed = 7000; // milliseconds
         
         // Variables para narración
         
@@ -319,6 +322,8 @@
         const storyTitle = document.getElementById('story-title');
         const customTextBtn = document.getElementById('custom-text-btn');
         const loadCustomBtn = document.getElementById('load-custom-btn');
+        const charCounter = document.getElementById('char-counter');
+        const charCount = document.getElementById('char-count');
 
         // Cargar cuentos desde JSON al iniciar
         async function cargarCuentos() {
@@ -565,7 +570,23 @@
         customTextBtn.addEventListener('click', () => {
             storyInput.style.display = 'block';
             loadCustomBtn.style.display = 'block';
+            charCounter.style.display = 'block';
             customTextBtn.style.display = 'none';
+        });
+
+        // Actualizar contador de caracteres en tiempo real
+        storyInput.addEventListener('input', () => {
+            const count = storyInput.value.length;
+            charCount.textContent = count;
+            
+            // Cambiar color si se acerca al límite
+            if (count >= 2800) {
+                charCount.style.color = '#ff6b6b'; // Rojo si está cerca del límite
+            } else if (count >= 2500) {
+                charCount.style.color = '#ffa500'; // Naranja si está llegando
+            } else {
+                charCount.style.color = '#00d9ff'; // Cyan normal
+            }
         });
 
         // Cargar texto personalizado
