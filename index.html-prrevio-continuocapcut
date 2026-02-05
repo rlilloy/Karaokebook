@@ -284,7 +284,7 @@
         
         <div class="slider-container">
             <span style="font-size: 0.8rem; color: #999;">🐌</span>
-            <input type="range" id="speed-slider" min="3" max="14" value="7" step="0.5">
+            <input type="range" id="speed-slider" min="3" max="15" value="9" step="0.5">
             <span style="font-size: 0.8rem; color: #999;">🚀</span>
         </div>
 
@@ -294,7 +294,7 @@
         </div>
     </div>
 
-    <!-- Barra de progreso eliminada para scroll continuo -->
+    <div id="progress">Fragmento <span id="current">0</span> de <span id="total">0</span></div>
 
     <script>
         // URL del archivo JSON - usando ruta relativa (mismo dominio)
@@ -439,120 +439,122 @@
             console.log('  - Título:', title);
             console.log('  - Texto length:', text.length);
             
-            // Ya no dividimos en fragmentos, usamos el texto completo
-            // Dividir en párrafos para el scroll continuo
-            const parrafos = text.split(/\n\n+/).filter(p => p.trim());
-            
-            // Crear display con todos los párrafos
-            textDisplay.innerHTML = '';
-            parrafos.forEach((parrafo, i) => {
-                const p = document.createElement('p');
-                p.className = 'scroll-line';
-                p.textContent = parrafo.trim();
-                p.style.margin = '20px 0';
-                p.style.lineHeight = '1.8';
-                textDisplay.appendChild(p);
-            });
+            // Dividir el texto en fragmentos inteligentes (~20 palabras, terminando en . o ,)
+            storyFragments = dividirTextoInteligente(text);
+            console.log('  - Fragmentos creados:', storyFragments.length);
             
             currentIndex = 0;
+            totalSpan.textContent = storyFragments.length;
             storyTitle.textContent = title;
+            
+            showFragment(0);
             
             console.log('  - Ocultando menú...');
             loadTextDiv.classList.add('hidden');
             console.log('  - ¿Menú oculto?', loadTextDiv.classList.contains('hidden'));
-            
-            // Resetear scroll al inicio
-            const container = document.getElementById('reader-container');
-            container.scrollTop = 0;
         }
 
-        // ========== SCROLL CONTINUO ESTILO CAPCUT ==========
-        
-        let scrollAnimationId = null;
-        let lastScrollTime = 0;
-        
-        function startContinuousScroll() {
-            if (scrollAnimationId) return; // Ya está corriendo
+        function dividirTextoInteligente(texto) {
+            // Limpiar el texto
+            texto = texto.replace(/\s+/g, ' ').trim();
             
-            const container = document.getElementById('reader-container');
-            const allLines = container.querySelectorAll('.scroll-line');
+            const fragmentos = [];
+            const palabras = texto.split(' ');
+            let fragmentoActual = '';
+            let contadorPalabras = 0;
             
-            lastScrollTime = performance.now();
-            
-            function scroll(currentTime) {
-                if (!isPlaying) return;
+            for (let i = 0; i < palabras.length; i++) {
+                const palabra = palabras[i];
+                fragmentoActual += (fragmentoActual ? ' ' : '') + palabra;
+                contadorPalabras++;
                 
-                const deltaTime = currentTime - lastScrollTime;
-                lastScrollTime = currentTime;
+                // Buscar si termina en punto o coma
+                const terminaEnPuntuacion = palabra.match(/[.,;:]$/);
                 
-                // Calcular píxeles a scrollear según velocidad
-                // speed está en milisegundos, lo convertimos a velocidad de scroll
-                const pixelsPerSecond = 100 / (speed / 1000); // Más lento = menos píxeles
-                const scrollAmount = (pixelsPerSecond * deltaTime) / 1000;
-                
-                container.scrollTop += scrollAmount;
-                
-                // Actualizar highlight de las 2 líneas centrales
-                updateCentralHighlight();
-                
-                // Continuar animación
-                if (isPlaying) {
-                    scrollAnimationId = requestAnimationFrame(scroll);
+                // Crear fragmento si:
+                // 1. Tiene al menos 20 palabras Y termina en puntuación
+                // 2. O tiene más de 30 palabras (forzar corte)
+                if ((contadorPalabras >= 20 && terminaEnPuntuacion) || contadorPalabras >= 30) {
+                    fragmentos.push(fragmentoActual.trim());
+                    fragmentoActual = '';
+                    contadorPalabras = 0;
                 }
             }
             
-            scrollAnimationId = requestAnimationFrame(scroll);
-            console.log('▶ Scroll continuo iniciado');
-        }
-        
-        function stopContinuousScroll() {
-            if (scrollAnimationId) {
-                cancelAnimationFrame(scrollAnimationId);
-                scrollAnimationId = null;
-                console.log('⏸ Scroll continuo pausado');
+            // Agregar último fragmento si quedó algo
+            if (fragmentoActual.trim()) {
+                fragmentos.push(fragmentoActual.trim());
             }
-        }
-        
-        function updateCentralHighlight() {
-            const container = document.getElementById('reader-container');
-            const allLines = container.querySelectorAll('.scroll-line');
-            const containerRect = container.getBoundingClientRect();
-            const centerY = containerRect.top + containerRect.height / 2;
             
-            allLines.forEach(line => {
-                const lineRect = line.getBoundingClientRect();
-                const lineCenter = lineRect.top + lineRect.height / 2;
-                const distanceFromCenter = Math.abs(lineCenter - centerY);
+            return fragmentos;
+        }
+
+        function showFragment(index) {
+            if (index >= 0 && index < storyFragments.length) {
+                currentIndex = index;
                 
-                // Las 2 líneas más cercanas al centro se destacan
-                if (distanceFromCenter < lineRect.height * 1.5) {
-                    line.style.color = '#00d9ff';
-                    line.style.opacity = '1';
-                    line.style.fontWeight = 'bold';
-                    line.style.textShadow = '0 0 20px rgba(0, 217, 255, 0.5)';
-                } else {
-                    line.style.color = '#e0e0e0';
-                    line.style.opacity = '0.4';
-                    line.style.fontWeight = 'normal';
-                    line.style.textShadow = 'none';
-                }
-            });
+                // Mostrar todas las líneas con la actual destacada
+                textDisplay.innerHTML = '';
+                
+                storyFragments.forEach((fragment, i) => {
+                    const line = document.createElement('div');
+                    line.className = 'text-line';
+                    line.textContent = fragment;
+                    line.id = `line-${i}`;
+                    
+                    if (i === index) {
+                        line.classList.add('active');
+                    } else if (i < index) {
+                        line.classList.add('past');
+                    }
+                    
+                    textDisplay.appendChild(line);
+                });
+                
+                // Scroll tipo TELEPROMPTER: línea activa siempre arriba
+                setTimeout(() => {
+                    const activeLine = document.getElementById(`line-${index}`);
+                    const container = document.getElementById('reader-container');
+                    
+                    if (activeLine && container) {
+                        // Scroll INSTANTÁNEO (sin smooth) para teleprompter
+                        const scrollPosition = activeLine.offsetTop - 20;
+                        container.scrollTop = scrollPosition;
+                        
+                        console.log('📍 Scroll a línea', index, '- offset:', scrollPosition);
+                    }
+                }, 50);
+                
+                currentSpan.textContent = index + 1;
+            }
         }
 
         function play() {
-            if (!textDisplay.innerHTML) return;
+            if (storyFragments.length === 0) return;
             
             isPlaying = true;
             playPauseBtn.textContent = '⏸ Pausar';
             
-            console.log('▶ Play iniciado - velocidad:', speed, 'ms');
-            startContinuousScroll();
+            console.log('▶ Play iniciado - velocidad:', speed, 'ms', 'fragmentos totales:', storyFragments.length);
+            
+            intervalId = setInterval(() => {
+                console.log('⏩ Avanzando de', currentIndex, 'a', currentIndex + 1);
+                if (currentIndex < storyFragments.length - 1) {
+                    showFragment(currentIndex + 1);
+                } else {
+                    console.log('✅ Cuento terminado');
+                    pause();
+                }
+            }, speed);
         }
 
         function pause() {
             isPlaying = false;
             playPauseBtn.textContent = '▶ Continuar';
-            stopContinuousScroll();
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
         }
 
         // ========== FUNCIONES DE NARRACIÓN ==========
@@ -601,10 +603,10 @@
 
         playPauseBtn.addEventListener('click', () => {
             console.log('🔘 Botón clickeado');
-            console.log('📊 Estado actual - isPlaying:', isPlaying, 'speed:', speed);
+            console.log('📊 Estado actual - isPlaying:', isPlaying, 'fragmentos:', storyFragments.length, 'speed:', speed);
             
-            if (!textDisplay.innerHTML) {
-                console.log('❌ No hay texto cargado');
+            if (storyFragments.length === 0) {
+                console.log('❌ No hay fragmentos cargados');
                 return;
             }
             
@@ -629,16 +631,15 @@
 
         document.getElementById('restart').addEventListener('click', () => {
             pause();
-            const container = document.getElementById('reader-container');
-            container.scrollTop = 0;
-            updateCentralHighlight();
+            showFragment(0);
         });
 
         // Botón de narración
 
         document.getElementById('back-to-menu').addEventListener('click', () => {
             pause();
-            stopContinuousScroll();
+            storyFragments = [];
+            currentIndex = 0;
             textDisplay.innerHTML = '';
             storyTitle.textContent = 'Lector de Cuentos';
             loadTextDiv.classList.remove('hidden');
