@@ -25,22 +25,22 @@
 
         #reader-container {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden;
             position: relative;
-            padding: 20px 20px 45vh 20px;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
-            scroll-behavior: smooth;
         }
 
         #text-display {
             font-size: 1.3rem;
-            line-height: 2;
-            text-align: left;
-            max-width: 600px;
+            line-height: 2.2;
+            text-align: center;
             width: 100%;
+            max-width: 600px;
+            height: calc(1.3rem * 2.2 * 5);
+            overflow: hidden;
+            position: relative;
         }
 
         .text-line {
@@ -439,20 +439,43 @@
             console.log('  - Título:', title);
             console.log('  - Texto length:', text.length);
             
-            // Ya no dividimos en fragmentos, usamos el texto completo
-            // Dividir en párrafos para el scroll continuo
-            const parrafos = text.split(/\n\n+/).filter(p => p.trim());
+            // Dividir texto en líneas de ~30 caracteres
+            const palabras = text.split(/\s+/);
+            const lineas = [];
+            let lineaActual = '';
             
-            // Crear display con todos los párrafos
+            palabras.forEach(palabra => {
+                const lineaConPalabra = lineaActual ? lineaActual + ' ' + palabra : palabra;
+                
+                if (lineaConPalabra.length <= 30) {
+                    lineaActual = lineaConPalabra;
+                } else {
+                    if (lineaActual) {
+                        lineas.push(lineaActual);
+                    }
+                    lineaActual = palabra;
+                }
+            });
+            
+            // Agregar última línea
+            if (lineaActual) {
+                lineas.push(lineaActual);
+            }
+            
+            // Crear display con todas las líneas
             textDisplay.innerHTML = '';
-            parrafos.forEach((parrafo, i) => {
-                const p = document.createElement('p');
+            lineas.forEach((linea, i) => {
+                const p = document.createElement('div');
                 p.className = 'scroll-line';
-                p.textContent = parrafo.trim();
-                p.style.margin = '20px 0';
-                p.style.lineHeight = '1.8';
+                p.textContent = linea;
+                p.style.fontSize = '1.3rem';
+                p.style.lineHeight = '2.2';
+                p.style.margin = '0';
+                p.style.padding = '5px 0';
                 textDisplay.appendChild(p);
             });
+            
+            console.log('  - Líneas creadas:', lineas.length);
             
             currentIndex = 0;
             storyTitle.textContent = title;
@@ -461,21 +484,19 @@
             loadTextDiv.classList.add('hidden');
             console.log('  - ¿Menú oculto?', loadTextDiv.classList.contains('hidden'));
             
-            // Resetear scroll al inicio
-            const container = document.getElementById('reader-container');
-            container.scrollTop = 0;
+            // Resetear posición del texto
+            currentTranslateY = 0;
+            textDisplay.style.transform = 'translateY(0)';
         }
 
         // ========== SCROLL CONTINUO ESTILO CAPCUT ==========
         
         let scrollAnimationId = null;
         let lastScrollTime = 0;
+        let currentTranslateY = 0;
         
         function startContinuousScroll() {
             if (scrollAnimationId) return; // Ya está corriendo
-            
-            const container = document.getElementById('reader-container');
-            const allLines = container.querySelectorAll('.scroll-line');
             
             lastScrollTime = performance.now();
             
@@ -486,14 +507,11 @@
                 lastScrollTime = currentTime;
                 
                 // Calcular píxeles a scrollear según velocidad
-                // speed está en milisegundos, lo convertimos a velocidad de scroll
-                const pixelsPerSecond = 100 / (speed / 1000); // Más lento = menos píxeles
+                const pixelsPerSecond = 100 / (speed / 1000);
                 const scrollAmount = (pixelsPerSecond * deltaTime) / 1000;
                 
-                container.scrollTop += scrollAmount;
-                
-                // Actualizar highlight de las 2 líneas centrales
-                updateCentralHighlight();
+                currentTranslateY -= scrollAmount;
+                textDisplay.style.transform = `translateY(${currentTranslateY}px)`;
                 
                 // Continuar animación
                 if (isPlaying) {
@@ -514,39 +532,54 @@
         }
         
         function updateCentralHighlight() {
-            const container = document.getElementById('reader-container');
-            const allLines = container.querySelectorAll('.scroll-line');
-            const containerRect = container.getBoundingClientRect();
-            const centerY = containerRect.top + containerRect.height / 2;
-            
-            allLines.forEach(line => {
-                const lineRect = line.getBoundingClientRect();
-                const lineCenter = lineRect.top + lineRect.height / 2;
-                const distanceFromCenter = Math.abs(lineCenter - centerY);
-                
-                // Las 2 líneas más cercanas al centro se destacan
-                if (distanceFromCenter < lineRect.height * 1.5) {
-                    line.style.color = '#00d9ff';
-                    line.style.opacity = '1';
-                    line.style.fontWeight = 'bold';
-                    line.style.textShadow = '0 0 20px rgba(0, 217, 255, 0.5)';
-                } else {
-                    line.style.color = '#e0e0e0';
-                    line.style.opacity = '0.4';
-                    line.style.fontWeight = 'normal';
-                    line.style.textShadow = 'none';
-                }
-            });
+            // En modelo CapCut no hay atenuación, todo el texto visible tiene la misma opacidad
+            // La ventana de 5 líneas se maneja con CSS overflow
         }
 
         function play() {
             if (!textDisplay.innerHTML) return;
             
-            isPlaying = true;
-            playPauseBtn.textContent = '⏸ Pausar';
+            // Countdown de 3 segundos
+            showCountdown(3, () => {
+                isPlaying = true;
+                playPauseBtn.textContent = '⏸ Pausar';
+                
+                console.log('▶ Play iniciado - velocidad:', speed, 'ms');
+                startContinuousScroll();
+            });
+        }
+        
+        function showCountdown(seconds, callback) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                font-size: 5rem;
+                color: #00d9ff;
+                font-weight: bold;
+            `;
+            overlay.textContent = seconds;
+            document.body.appendChild(overlay);
             
-            console.log('▶ Play iniciado - velocidad:', speed, 'ms');
-            startContinuousScroll();
+            let count = seconds;
+            const interval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    overlay.textContent = count;
+                } else {
+                    clearInterval(interval);
+                    overlay.remove();
+                    callback();
+                }
+            }, 1000);
         }
 
         function pause() {
@@ -629,9 +662,8 @@
 
         document.getElementById('restart').addEventListener('click', () => {
             pause();
-            const container = document.getElementById('reader-container');
-            container.scrollTop = 0;
-            updateCentralHighlight();
+            currentTranslateY = 0;
+            textDisplay.style.transform = 'translateY(0)';
         });
 
         // Botón de narración
