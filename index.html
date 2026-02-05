@@ -25,7 +25,7 @@
 
         #reader-container {
             position: fixed;
-            top: 20vh;
+            top: 5vh;
             left: 0;
             right: 0;
             bottom: 45vh;
@@ -543,54 +543,11 @@
         function play() {
             if (!textDisplay.innerHTML) return;
             
-            // Limpiar cualquier countdown anterior que pueda haber quedado
-            const oldCountdown = document.getElementById('countdown-overlay');
-            if (oldCountdown) {
-                oldCountdown.remove();
-            }
+            isPlaying = true;
+            playPauseBtn.textContent = '⏸ Pausar';
             
-            // Countdown de 3 segundos
-            showCountdown(3, () => {
-                isPlaying = true;
-                playPauseBtn.textContent = '⏸ Pausar';
-                
-                console.log('▶ Play iniciado - velocidad:', speed, 'ms');
-                startContinuousScroll();
-            });
-        }
-        
-        function showCountdown(seconds, callback) {
-            const overlay = document.createElement('div');
-            overlay.id = 'countdown-overlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.9);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-                font-size: 5rem;
-                color: #00d9ff;
-                font-weight: bold;
-            `;
-            overlay.textContent = seconds;
-            document.body.appendChild(overlay);
-            
-            let count = seconds;
-            const interval = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    overlay.textContent = count;
-                } else {
-                    clearInterval(interval);
-                    document.body.removeChild(overlay);
-                    callback();
-                }
-            }, 1000);
+            console.log('▶ Play iniciado - velocidad:', speed, 'ms');
+            startContinuousScroll();
         }
 
         function pause() {
