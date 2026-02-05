@@ -543,6 +543,12 @@
         function play() {
             if (!textDisplay.innerHTML) return;
             
+            // Limpiar cualquier countdown anterior que pueda haber quedado
+            const oldCountdown = document.getElementById('countdown-overlay');
+            if (oldCountdown) {
+                oldCountdown.remove();
+            }
+            
             // Countdown de 3 segundos
             showCountdown(3, () => {
                 isPlaying = true;
@@ -555,13 +561,14 @@
         
         function showCountdown(seconds, callback) {
             const overlay = document.createElement('div');
+            overlay.id = 'countdown-overlay';
             overlay.style.cssText = `
                 position: fixed;
                 top: 0;
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(0, 0, 0, 0.8);
+                background: rgba(0, 0, 0, 0.9);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -580,7 +587,7 @@
                     overlay.textContent = count;
                 } else {
                     clearInterval(interval);
-                    overlay.remove();
+                    document.body.removeChild(overlay);
                     callback();
                 }
             }, 1000);
